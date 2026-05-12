@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Tableau de bord client - Camille B.</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Montserrat:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet" />
+
+    <link rel="stylesheet" href="/app/css/landing.css" />
+    <script src="/app/js/client-dashboard.js" defer></script>
+</head>
+
+<body>
+    <main class="client-page">
+        <!-- HEADER CLIENT -->
+        <header class="client-header">
+            <nav class="client-nav" aria-label="Navigation espace client">
+                <div class="client-nav-left">
+                    <a href="/app/client-dashboard.html">Accueil</a>
+                    <a href="/app/client-project.html">Projets</a>
+                    <a href="/app/client-budget.html">Budget</a>
+                    <a href="/app/client-documents.html">Documents</a>
+                </div>
+
+                <div class="client-nav-right">
+                    <a href="/app/#contact">Contact</a>
+                </div>
+            </nav>
+        </header>
+
+        <!-- IDENTITÉ / ESPACE -->
+        <section class="client-identity" aria-label="Espace client">
+            <div class="client-logo" aria-hidden="true">
+                CB
+            </div>
+
+            <button class="client-space-button" type="button">
+                Mon espace
+            </button>
+        </section>
+
+        <!-- TABLEAU DE BORD -->
+        <section class="dashboard-shell" aria-labelledby="dashboard-title">
+            <h1 id="dashboard-title" class="dashboard-page-title">
+                Tableau de bord
+            </h1>
+
+            <section class="dashboard-stats" aria-label="Résumé du projet">
+                <article class="dashboard-stat-card">
+                    <strong id="tasksCount">7</strong>
+                    <span>Tâches restantes</span>
+                </article>
+
+                <article class="dashboard-stat-card">
+                    <strong id="budgetAmount">12 500 €</strong>
+                    <span>Budget prévu</span>
+                </article>
+
+                <article class="dashboard-stat-card">
+                    <strong id="guestsCount">84</strong>
+                    <span>Invités confirmés</span>
+                </article>
+            </section>
+
+            <section class="dashboard-panels">
+                <article class="dashboard-panel">
+                    <h2>Prochaines étapes</h2>
+
+                    <ul id="nextStepsList" class="dashboard-list">
+                        <li>
+                            <span>Valider le devis traiteur</span>
+                            <span class="status-pill">Cette semaine</span>
+                        </li>
+
+                        <li>
+                            <span>Confirmer les horaires de la salle</span>
+                            <span class="status-pill">Important</span>
+                        </li>
+
+                        <li>
+                            <span>Finaliser le plan de table</span>
+                            <span class="status-pill">À faire</span>
+                        </li>
+                    </ul>
+                </article>
+
+                <article class="dashboard-panel">
+                    <h2>Commentaires Camille</h2>
+
+                    <ul id="commentsList" class="dashboard-list">
+                        <li>
+                            <span>devis-traiteur.pdf</span>
+                            <span class="status-pill">Commenté</span>
+                        </li>
+
+                        <li>
+                            <span>inspiration-deco.jpg</span>
+                            <span class="status-pill">Vu</span>
+                        </li>
+
+                        <li>
+                            <span>contrat-salle.pdf</span>
+                            <span class="status-pill">À vérifier</span>
+                        </li>
+                    </ul>
+                </article>
+            </section>
+        </section>
+    </main>
+</body>
+
+</html>

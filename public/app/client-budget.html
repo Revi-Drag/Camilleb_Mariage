@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Budget - Camille B.</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Montserrat:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet" />
+
+    <link rel="stylesheet" href="/app/css/landing.css" />
+    <script src="/app/js/client-budget.js" defer></script>
+</head>
+
+<body>
+    <main class="client-page">
+        <!-- HEADER CLIENT -->
+        <header class="client-header">
+            <nav class="client-nav" aria-label="Navigation espace client">
+                <div class="client-nav-left">
+                    <a href="/app/">Accueil</a>
+                    <a href="/app/client-dashboard.html">Projets</a>
+                    <a href="/app/client-guests.html">Invités</a>
+                    <a href="/app/client-budget.html">Budget</a>
+                    <a href="/app/client-documents.html">Documents</a>
+                </div>
+
+                <div class="client-nav-right">
+                    <a href="/app/#contact">Contact</a>
+                </div>
+            </nav>
+        </header>
+
+        <!-- IDENTITÉ -->
+        <section class="client-identity budget-identity" aria-label="Espace client">
+            <div class="client-logo" aria-hidden="true">CB</div>
+        </section>
+
+        <!-- PAGE BUDGET -->
+        <section class="budget-shell" aria-labelledby="budget-title">
+            <header class="budget-header">
+                <h1 id="budget-title">Budget</h1>
+                <div class="budget-title-line"></div>
+            </header>
+
+            <section class="budget-summary" aria-label="Résumé budget">
+                <article class="budget-summary-card">
+                    <strong id="budgetTotal">0 €</strong>
+                    <span>TOTAL</span>
+                </article>
+
+                <article class="budget-summary-card budget-summary-alert">
+                    <strong id="budgetRemaining">0 €</strong>
+                    <span>Reste du budget</span>
+                </article>
+            </section>
+
+            <div class="budget-actions-bar">
+                <button type="button" class="budget-add-button" id="openAddExpenseButton">
+                    + Ajouter une dépense
+                </button>
+            </div>
+
+            <div class="budget-table-wrapper">
+                <table class="budget-table">
+                    <thead>
+                        <tr>
+                            <th>Dépense</th>
+                            <th>Prévu</th>
+                            <th>Réel</th>
+                            <th>Différence</th>
+                            <th>Pourcentage du budget</th>
+                            <th>Commentaires</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="budgetTableBody">
+                        <!-- Rempli par client-budget.js -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- MODALE AJOUT / MODIFICATION DÉPENSE -->
+        <div class="budget-modal hidden" id="budgetModal" role="dialog" aria-modal="true"
+            aria-labelledby="budgetModalTitle">
+            <div class="budget-modal-backdrop" id="budgetModalBackdrop"></div>
+
+            <section class="budget-modal-card">
+                <div class="budget-modal-header">
+                    <h2 id="budgetModalTitle">Ajouter une dépense</h2>
+
+                    <button type="button" class="budget-modal-close" id="closeBudgetModalButton" aria-label="Fermer">
+                        ×
+                    </button>
+                </div>
+
+                <form id="budgetForm" class="budget-form">
+                    <input type="hidden" id="expenseId" />
+
+                    <div class="budget-form-group">
+                        <label for="expenseName">Dépense</label>
+                        <input id="expenseName" type="text" required placeholder="Ex : Traiteur" />
+                    </div>
+
+                    <div class="budget-form-group">
+                        <label for="expensePlanned">Montant prévu</label>
+                        <input id="expensePlanned" type="number" min="0" step="1" required placeholder="Ex : 4000" />
+                    </div>
+
+                    <div class="budget-form-group">
+                        <label for="expenseActual">Montant réel</label>
+                        <input id="expenseActual" type="number" min="0" step="1" placeholder="Ex : 6500" />
+                    </div>
+
+                    <div class="budget-form-group">
+                        <label for="expenseComment">Commentaires</label>
+                        <textarea id="expenseComment" rows="3"
+                            placeholder="Ex : Voir à changer de prestataire"></textarea>
+                    </div>
+
+                    <div class="budget-form-preview">
+                        <p>
+                            Différence :
+                            <strong id="expenseDifferencePreview">0 €</strong>
+                        </p>
+                        <p>
+                            Pourcentage :
+                            <strong id="expensePercentagePreview">0 %</strong>
+                        </p>
+                    </div>
+
+                    <div class="budget-form-actions">
+                        <button type="button" class="budget-cancel-button" id="cancelBudgetButton">
+                            Annuler
+                        </button>
+
+                        <button type="submit" class="budget-save-button">
+                            Enregistrer
+                        </button>
+                    </div>
+                </form>
+            </section>
+        </div>
+    </main>
+</body>
+
+</html>

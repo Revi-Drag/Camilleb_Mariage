@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Admin - Détail projet - Camille B.</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Montserrat:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet" />
+
+    <link rel="stylesheet" href="/app/css/landing.css" />
+    <script src="/app/js/admin-project-detail.js" defer></script>
+</head>
+
+<body>
+    <main class="admin-page">
+        <!-- HEADER ADMIN -->
+        <header class="admin-header">
+            <nav class="admin-nav" aria-label="Navigation administrateur">
+                <div class="admin-nav-left">
+                    <a href="/app/">Accueil</a>
+                    <a href="/app/admin-dashboard.html">Projets</a>
+                    <a href="/app/admin-clients.html">Clients</a>
+                    <a href="/app/admin-documents.html">Documents</a>
+                    <a href="/app/admin-settings.html">Paramètres</a>
+                </div>
+
+                <div class="admin-nav-right">
+                    <a href="/app/#contact">Contact</a>
+                </div>
+            </nav>
+        </header>
+
+        <!-- IDENTITÉ ADMIN -->
+        <section class="admin-identity" aria-label="Espace administrateur">
+            <div class="admin-logo" aria-hidden="true">CB</div>
+
+            <span class="admin-space-badge">
+                Espace admin
+            </span>
+        </section>
+
+        <!-- DÉTAIL PROJET -->
+        <section class="admin-project-detail-shell" aria-labelledby="adminProjectTitle">
+            <header class="admin-project-detail-header">
+                <div>
+                    <p class="admin-eyebrow">Fiche projet mariage</p>
+                    <h1 id="adminProjectTitle">Projet mariage</h1>
+
+                    <p class="admin-project-detail-subtitle" id="adminProjectSubtitle">
+                        Chargement du projet...
+                    </p>
+                </div>
+
+                <div class="admin-project-detail-actions">
+                    <a href="/app/admin-dashboard.html" class="admin-secondary-link">
+                        ← Retour aux projets
+                    </a>
+
+                    <button type="button" class="admin-secondary-button" id="toggleProjectStatusButton">
+                        Marquer terminé
+                    </button>
+                </div>
+            </header>
+
+            <!-- CARTES RÉSUMÉ -->
+            <section class="admin-project-detail-stats" aria-label="Résumé du projet">
+                <article class="admin-stat-card">
+                    <strong id="projectBudgetPlanned">0 €</strong>
+                    <span>Budget prévu</span>
+                </article>
+
+                <article class="admin-stat-card admin-stat-warning">
+                    <strong id="projectBudgetUsed">0 €</strong>
+                    <span>Budget utilisé</span>
+                </article>
+
+                <article class="admin-stat-card">
+                    <strong id="projectGuestsConfirmed">0</strong>
+                    <span>Invités confirmés</span>
+                </article>
+
+                <article class="admin-stat-card admin-stat-alert">
+                    <strong id="projectDocumentsToReview">0</strong>
+                    <span>Documents à vérifier</span>
+                </article>
+
+                <article class="admin-stat-card">
+                    <strong id="projectTasksRemaining">0</strong>
+                    <span>Tâches restantes</span>
+                </article>
+            </section>
+
+            <!-- INFOS PRINCIPALES -->
+            <section class="admin-project-detail-grid">
+                <article class="admin-project-info-card">
+                    <h2>Informations projet</h2>
+
+                    <dl class="admin-project-info-list">
+                        <div>
+                            <dt>Date du mariage</dt>
+                            <dd id="projectWeddingDate">-</dd>
+                        </div>
+
+                        <div>
+                            <dt>Statut</dt>
+                            <dd>
+                                <span id="projectStatusBadge" class="admin-status-pill active">En cours</span>
+                            </dd>
+                        </div>
+
+                        <div>
+                            <dt>Clients associés</dt>
+                            <dd id="projectClients">-</dd>
+                        </div>
+
+                        <div>
+                            <dt>Note admin</dt>
+                            <dd id="projectAdminNote">-</dd>
+                        </div>
+                    </dl>
+                </article>
+
+                <article class="admin-project-info-card">
+                    <h2>Activité récente</h2>
+
+                    <ul class="admin-project-activity-list" id="projectActivityList">
+                        <!-- Rempli par JS -->
+                    </ul>
+                </article>
+            </section>
+
+            <!-- PANNEAUX MÉTIER -->
+            <section class="admin-project-panels">
+                <!-- DOCUMENTS -->
+                <article class="admin-project-panel">
+                    <div class="admin-project-panel-header">
+                        <h2>Documents du projet</h2>
+                        <a href="/app/admin-documents.html">Voir tous</a>
+                    </div>
+
+                    <div class="admin-project-mini-table-wrapper">
+                        <table class="admin-project-mini-table">
+                            <thead>
+                                <tr>
+                                    <th>Document</th>
+                                    <th>Déposé</th>
+                                    <th>Statut</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="projectDocumentsBody">
+                                <!-- Rempli par JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </article>
+
+                <!-- BUDGET -->
+                <article class="admin-project-panel">
+                    <div class="admin-project-panel-header">
+                        <h2>Budget du projet</h2>
+                    </div>
+
+                    <div class="admin-project-mini-table-wrapper">
+                        <table class="admin-project-mini-table">
+                            <thead>
+                                <tr>
+                                    <th>Dépense</th>
+                                    <th>Prévu</th>
+                                    <th>Réel</th>
+                                    <th>Écart</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="projectBudgetBody">
+                                <!-- Rempli par JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </article>
+
+                <!-- INVITÉS -->
+                <article class="admin-project-panel">
+                    <div class="admin-project-panel-header">
+                        <h2>Invités</h2>
+                    </div>
+
+                    <div class="admin-project-mini-table-wrapper">
+                        <table class="admin-project-mini-table">
+                            <thead>
+                                <tr>
+                                    <th>Nom</th>
+                                    <th>Statut</th>
+                                    <th>Contrainte</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="projectGuestsBody">
+                                <!-- Rempli par JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </article>
+
+                <!-- TÂCHES -->
+                <article class="admin-project-panel">
+                    <div class="admin-project-panel-header">
+                        <h2>Tâches</h2>
+                    </div>
+
+                    <div class="admin-project-mini-table-wrapper">
+                        <table class="admin-project-mini-table">
+                            <thead>
+                                <tr>
+                                    <th>Tâche</th>
+                                    <th>Priorité</th>
+                                    <th>Statut</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="projectTasksBody">
+                                <!-- Rempli par JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </article>
+            </section>
+        </section>
+
+        <!-- MODALE COMMENTAIRE DOCUMENT -->
+        <div class="admin-project-document-modal hidden" id="projectDocumentModal" role="dialog" aria-modal="true"
+            aria-labelledby="projectDocumentModalTitle">
+            <div class="admin-project-document-modal-backdrop" id="projectDocumentModalBackdrop"></div>
+
+            <section class="admin-project-document-modal-card">
+                <div class="admin-project-document-modal-header">
+                    <h2 id="projectDocumentModalTitle">Commenter le document</h2>
+
+                    <button type="button" class="admin-project-document-modal-close"
+                        id="closeProjectDocumentModalButton" aria-label="Fermer">
+                        ×
+                    </button>
+                </div>
+
+                <form id="projectDocumentCommentForm" class="admin-project-document-form">
+                    <input type="hidden" id="projectDocumentId" />
+
+                    <div class="admin-document-context">
+                        <p>
+                            <strong>Document :</strong>
+                            <span id="projectDocumentName">-</span>
+                        </p>
+
+                        <p>
+                            <strong>Projet :</strong>
+                            <span id="projectDocumentProject">-</span>
+                        </p>
+                    </div>
+
+                    <div class="admin-document-form-group">
+                        <label for="projectDocumentComment">Commentaire admin</label>
+                        <textarea id="projectDocumentComment" rows="5"
+                            placeholder="Commentaire visible côté client..."></textarea>
+                    </div>
+
+                    <div class="admin-document-form-actions">
+                        <button type="button" class="admin-document-cancel-button" id="cancelProjectDocumentButton">
+                            Annuler
+                        </button>
+
+                        <button type="submit" class="admin-document-save-button">
+                            Enregistrer
+                        </button>
+                    </div>
+                </form>
+            </section>
+        </div>
+    </main>
+</body>
+
+</html>

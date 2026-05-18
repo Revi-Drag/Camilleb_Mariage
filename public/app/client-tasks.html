@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Tâches - Camille B.</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Montserrat:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet" />
+
+    <link rel="stylesheet" href="/app/css/landing.css" />
+    <script src="/app/js/client-tasks.js" defer></script>
+</head>
+
+<body>
+    <main class="client-page">
+        <!-- HEADER CLIENT -->
+        <header class="client-header">
+            <nav class="client-nav" aria-label="Navigation espace client">
+                <div class="client-nav-left">
+                    <a href="/app/">Accueil</a>
+                    <a href="/app/client-dashboard.html">Projets</a>
+                    <a href="/app/client-guests.html">Invités</a>
+                    <a href="/app/client-budget.html">Budget</a>
+                    <a href="/app/client-tasks.html">Tâches</a>
+                    <a href="/app/client-documents.html">Documents</a>
+                    <a href="/app/client-settings.html">Paramètres</a>
+                </div>
+
+                <div class="client-nav-right">
+                    <a href="/app/#contact">Contact</a>
+                </div>
+            </nav>
+        </header>
+
+        <!-- IDENTITÉ -->
+        <section class="client-identity tasks-identity" aria-label="Espace client">
+            <div class="client-logo" aria-hidden="true">CB</div>
+        </section>
+
+        <!-- PAGE TÂCHES -->
+        <section class="tasks-shell" aria-labelledby="tasks-title">
+            <header class="tasks-header">
+                <div>
+                    <p class="tasks-eyebrow">Organisation du projet mariage</p>
+                    <h1 id="tasks-title">Tâches</h1>
+                </div>
+
+                <button type="button" class="tasks-add-button" id="openAddTaskButton">
+                    + Ajouter une tâche
+                </button>
+            </header>
+
+            <!-- CARTES RÉSUMÉ -->
+            <section class="tasks-stats" aria-label="Résumé tâches">
+                <article class="tasks-stat-card">
+                    <strong id="tasksTotalCount">0</strong>
+                    <span>Tâches total</span>
+                </article>
+
+                <article class="tasks-stat-card">
+                    <strong id="tasksTodoCount">0</strong>
+                    <span>À faire</span>
+                </article>
+
+                <article class="tasks-stat-card">
+                    <strong id="tasksInProgressCount">0</strong>
+                    <span>En cours</span>
+                </article>
+
+                <article class="tasks-stat-card tasks-stat-success">
+                    <strong id="tasksDoneCount">0</strong>
+                    <span>Terminées</span>
+                </article>
+            </section>
+
+            <!-- OUTILS -->
+            <section class="tasks-tools" aria-label="Outils tâches">
+                <input id="taskSearchInput" class="tasks-search-input" type="search"
+                    placeholder="Rechercher une tâche..." aria-label="Rechercher une tâche" />
+
+                <select id="taskStatusFilter" class="tasks-filter-select" aria-label="Filtrer par statut">
+                    <option value="ALL">Tous les statuts</option>
+                    <option value="TODO">À faire</option>
+                    <option value="IN_PROGRESS">En cours</option>
+                    <option value="DONE">Terminées</option>
+                </select>
+
+                <select id="taskPriorityFilter" class="tasks-filter-select" aria-label="Filtrer par priorité">
+                    <option value="ALL">Toutes priorités</option>
+                    <option value="NORMAL">Normal</option>
+                    <option value="IMPORTANT">Important</option>
+                    <option value="URGENT">Urgent</option>
+                </select>
+            </section>
+
+            <!-- TABLEAU -->
+            <div class="tasks-table-wrapper">
+                <table class="tasks-table">
+                    <thead>
+                        <tr>
+                            <th>Tâche</th>
+                            <th>Échéance</th>
+                            <th>Priorité</th>
+                            <th>Statut</th>
+                            <th>Commentaire</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="tasksTableBody">
+                        <!-- Rempli par client-tasks.js -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- MODALE AJOUT / MODIFICATION TÂCHE -->
+        <div class="task-modal hidden" id="taskModal" role="dialog" aria-modal="true" aria-labelledby="taskModalTitle">
+            <div class="task-modal-backdrop" id="taskModalBackdrop"></div>
+
+            <section class="task-modal-card">
+                <div class="task-modal-header">
+                    <h2 id="taskModalTitle">Ajouter une tâche</h2>
+
+                    <button type="button" class="task-modal-close" id="closeTaskModalButton" aria-label="Fermer">
+                        ×
+                    </button>
+                </div>
+
+                <form id="taskForm" class="task-form">
+                    <input type="hidden" id="taskId" />
+
+                    <div class="task-form-group">
+                        <label for="taskTitle">Tâche</label>
+                        <input id="taskTitle" type="text" required placeholder="Ex : Valider le devis traiteur" />
+                    </div>
+
+                    <div class="task-form-grid">
+                        <div class="task-form-group">
+                            <label for="taskDueDate">Échéance</label>
+                            <input id="taskDueDate" type="date" />
+                        </div>
+
+                        <div class="task-form-group">
+                            <label for="taskPriority">Priorité</label>
+                            <select id="taskPriority">
+                                <option value="NORMAL">Normal</option>
+                                <option value="IMPORTANT">Important</option>
+                                <option value="URGENT">Urgent</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="task-form-group">
+                        <label for="taskStatus">Statut</label>
+                        <select id="taskStatus">
+                            <option value="TODO">À faire</option>
+                            <option value="IN_PROGRESS">En cours</option>
+                            <option value="DONE">Terminée</option>
+                        </select>
+                    </div>
+
+                    <div class="task-form-group">
+                        <label for="taskComment">Commentaire</label>
+                        <textarea id="taskComment" rows="3" placeholder="Note ou précision sur la tâche..."></textarea>
+                    </div>
+
+                    <div class="task-form-actions">
+                        <button type="button" class="task-cancel-button" id="cancelTaskButton">
+                            Annuler
+                        </button>
+
+                        <button type="submit" class="task-save-button">
+                            Enregistrer
+                        </button>
+                    </div>
+                </form>
+            </section>
+        </div>
+    </main>
+</body>
+
+</html>

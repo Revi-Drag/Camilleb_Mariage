@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Admin - Tableau de bord - Camille B.</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Montserrat:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet" />
+
+    <link rel="stylesheet" href="/app/css/landing.css" />
+    <script src="/app/js/admin-dashboard.js" defer></script>
+</head>
+
+<body>
+    <main class="admin-page">
+        <!-- HEADER ADMIN -->
+        <header class="admin-header">
+            <nav class="admin-nav" aria-label="Navigation administrateur">
+                <div class="admin-nav-left">
+                    <a href="/app/">Accueil</a>
+                    <a href="/app/admin-dashboard.html">Projets</a>
+                    <a href="/app/admin-clients.html">Clients</a>
+                    <a href="/app/admin-documents.html">Documents</a>
+                    <a href="/app/admin-settings.html">Paramètres</a>
+                </div>
+
+                <div class="admin-nav-right">
+                    <a href="/app/#contact">Contact</a>
+                </div>
+            </nav>
+        </header>
+
+        <!-- IDENTITÉ ADMIN -->
+        <section class="admin-identity" aria-label="Espace administrateur">
+            <div class="admin-logo" aria-hidden="true">CB</div>
+
+            <span class="admin-space-badge">
+                Espace admin
+            </span>
+        </section>
+
+        <!-- DASHBOARD ADMIN -->
+        <section class="admin-dashboard-shell" aria-labelledby="admin-dashboard-title">
+            <header class="admin-dashboard-header">
+                <div>
+                    <p class="admin-eyebrow">Pilotage des mariages</p>
+                    <h1 id="admin-dashboard-title">Tableau de bord admin</h1>
+                </div>
+
+                <div class="admin-dashboard-actions">
+                    <button type="button" class="admin-secondary-button" id="refreshAdminDashboardButton">
+                        Actualiser
+                    </button>
+
+                    <button type="button" class="admin-primary-button" id="openCreateProjectButton">
+                        + Créer un projet
+                    </button>
+                </div>
+
+            </header>
+
+            <!-- CARTES RÉSUMÉ -->
+            <section class="admin-stats-grid" aria-label="Résumé administrateur">
+                <article class="admin-stat-card">
+                    <strong id="activeProjectsCount">0</strong>
+                    <span>Projets en cours</span>
+                </article>
+
+                <article class="admin-stat-card">
+                    <strong id="completedProjectsCount">0</strong>
+                    <span>Projets terminés</span>
+                </article>
+
+                <article class="admin-stat-card admin-stat-warning">
+                    <strong id="recentActivityCount">0</strong>
+                    <span>Activités récentes</span>
+                </article>
+
+                <article class="admin-stat-card admin-stat-alert">
+                    <strong id="documentsToReviewCount">0</strong>
+                    <span>Documents à vérifier</span>
+                </article>
+            </section>
+
+            <!-- TABLEAU PROJETS -->
+            <section class="admin-projects-panel" aria-labelledby="admin-projects-title">
+                <div class="admin-panel-header">
+                    <h2 id="admin-projects-title">Projets mariage</h2>
+
+                    <div class="admin-table-tools">
+                        <input id="adminProjectSearchInput" class="admin-search-input" type="search"
+                            placeholder="Rechercher un projet ou un client..."
+                            aria-label="Rechercher un projet ou un client" />
+
+                        <select id="adminProjectStatusFilter" class="admin-filter-select"
+                            aria-label="Filtrer par statut">
+                            <option value="ALL">Tous</option>
+                            <option value="ACTIVE">En cours</option>
+                            <option value="COMPLETED">Terminés</option>
+                            <option value="ATTENTION">À traiter</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="admin-table-wrapper">
+                    <table class="admin-projects-table">
+                        <thead>
+                            <tr>
+                                <th>Projet</th>
+                                <th>Clients associés</th>
+                                <th>Date mariage</th>
+                                <th>Statut</th>
+                                <th>Dernier changement</th>
+                                <th>À traiter</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="adminProjectsTableBody">
+                            <!-- Rempli par admin-dashboard.js -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </section>
+        <!-- MODALE CRÉATION PROJET -->
+        <div class="admin-project-modal hidden" id="adminProjectModal" role="dialog" aria-modal="true"
+            aria-labelledby="adminProjectModalTitle">
+            <div class="admin-project-modal-backdrop" id="adminProjectModalBackdrop"></div>
+
+            <section class="admin-project-modal-card">
+                <div class="admin-project-modal-header">
+                    <h2 id="adminProjectModalTitle">Créer un projet mariage</h2>
+
+                    <button type="button" class="admin-project-modal-close" id="closeAdminProjectModalButton"
+                        aria-label="Fermer">
+                        ×
+                    </button>
+                </div>
+
+                <form id="adminProjectForm" class="admin-project-form">
+                    <div class="admin-project-form-grid">
+                        <div class="admin-project-form-group">
+                            <label for="projectName">Nom du projet</label>
+                            <input id="projectName" type="text" required placeholder="Ex : Mariage Marie & Lucas" />
+                        </div>
+
+                        <div class="admin-project-form-group">
+                            <label for="projectWeddingDate">Date du mariage</label>
+                            <input id="projectWeddingDate" type="date" required />
+                        </div>
+                    </div>
+
+                    <div class="admin-project-form-grid">
+                        <div class="admin-project-form-group">
+                            <label for="projectBudget">Budget prévisionnel</label>
+                            <input id="projectBudget" type="number" min="0" step="1" placeholder="Ex : 14000" />
+                        </div>
+
+                        <div class="admin-project-form-group">
+                            <label for="projectStatus">Statut</label>
+                            <select id="projectStatus">
+                                <option value="ACTIVE">En cours</option>
+                                <option value="COMPLETED">Terminé</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="admin-project-form-group">
+                        <label for="existingClientSelect">Clients associés</label>
+
+                        <div class="admin-project-client-picker">
+                            <select id="existingClientSelect">
+                                <option value="">Sélectionner un client existant</option>
+                            </select>
+
+                            <button type="button" class="admin-inline-button" id="addExistingClientButton">
+                                Ajouter
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="admin-project-quick-client">
+                        <div class="admin-project-quick-client-header">
+                            <h3>Ajouter un nouveau client</h3>
+
+                            <button type="button" class="admin-inline-button" id="toggleQuickClientButton">
+                                + Ajouter un client
+                            </button>
+                        </div>
+
+                        <div class="admin-project-quick-client-form hidden" id="quickClientForm">
+                            <div class="admin-project-form-grid">
+                                <div class="admin-project-form-group">
+                                    <label for="quickClientFirstName">Prénom</label>
+                                    <input id="quickClientFirstName" type="text" placeholder="Ex : Marie" />
+                                </div>
+
+                                <div class="admin-project-form-group">
+                                    <label for="quickClientLastName">Nom</label>
+                                    <input id="quickClientLastName" type="text" placeholder="Ex : Dupont" />
+                                </div>
+                            </div>
+
+                            <div class="admin-project-form-grid">
+                                <div class="admin-project-form-group">
+                                    <label for="quickClientEmail">Email</label>
+                                    <input id="quickClientEmail" type="email" placeholder="Ex : marie@email.fr" />
+                                </div>
+
+                                <div class="admin-project-form-group">
+                                    <label for="quickClientPhone">Téléphone</label>
+                                    <input id="quickClientPhone" type="tel" placeholder="Ex : 06 12 34 56 78" />
+                                </div>
+                            </div>
+
+                            <button type="button" class="admin-inline-button" id="saveQuickClientButton">
+                                Ajouter ce client au projet
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="admin-project-associated-clients">
+                        <h3>Clients ajoutés au projet</h3>
+
+                        <ul id="associatedClientsList">
+                            <li class="empty-associated-client">Aucun client associé pour le moment.</li>
+                        </ul>
+                    </div>
+
+                    <div class="admin-project-form-group">
+                        <label for="projectAdminComment">Commentaire admin</label>
+                        <textarea id="projectAdminComment" rows="3"
+                            placeholder="Notes internes sur ce projet..."></textarea>
+                    </div>
+
+                    <p class="admin-project-form-hint">
+                        En V1, cette création est gérée côté front. Le branchement API permettra ensuite de créer
+                        réellement le
+                        projet et les comptes clients associés.
+                    </p>
+
+                    <div class="admin-project-form-actions">
+                        <button type="button" class="admin-project-cancel-button" id="cancelAdminProjectButton">
+                            Annuler
+                        </button>
+
+                        <button type="submit" class="admin-project-save-button">
+                            Créer le projet
+                        </button>
+                    </div>
+                </form>
+            </section>
+        </div>
+    </main>
+</body>
+
+</html>

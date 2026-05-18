@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Admin - Documents - Camille B.</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Montserrat:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet" />
+
+    <link rel="stylesheet" href="/app/css/landing.css" />
+    <script src="/app/js/admin-documents.js" defer></script>
+</head>
+
+<body>
+    <main class="admin-page">
+        <!-- HEADER ADMIN -->
+        <header class="admin-header">
+            <nav class="admin-nav" aria-label="Navigation administrateur">
+                <div class="admin-nav-left">
+                    <a href="/app/">Accueil</a>
+                    <a href="/app/admin-dashboard.html">Projets</a>
+                    <a href="/app/admin-clients.html">Clients</a>
+                    <a href="/app/admin-documents.html">Documents</a>
+                    <a href="/app/admin-settings.html">Paramètres</a>
+                </div>
+
+                <div class="admin-nav-right">
+                    <a href="/app/#contact">Contact</a>
+                </div>
+            </nav>
+        </header>
+
+        <!-- IDENTITÉ ADMIN -->
+        <section class="admin-identity" aria-label="Espace administrateur">
+            <div class="admin-logo" aria-hidden="true">CB</div>
+
+            <span class="admin-space-badge">
+                Espace admin
+            </span>
+        </section>
+
+        <!-- PAGE DOCUMENTS ADMIN -->
+        <section class="admin-documents-shell" aria-labelledby="admin-documents-title">
+            <header class="admin-documents-header">
+                <div>
+                    <p class="admin-eyebrow">Suivi des fichiers clients</p>
+                    <h1 id="admin-documents-title">Documents</h1>
+                </div>
+
+                <button type="button" class="admin-primary-button" id="refreshAdminDocumentsButton">
+                    Actualiser
+                </button>
+            </header>
+
+            <!-- CARTES RÉSUMÉ -->
+            <section class="admin-documents-stats" aria-label="Résumé documents">
+                <article class="admin-stat-card">
+                    <strong id="documentsTotalCount">0</strong>
+                    <span>Documents total</span>
+                </article>
+
+                <article class="admin-stat-card admin-stat-alert">
+                    <strong id="documentsToReviewCount">0</strong>
+                    <span>À vérifier</span>
+                </article>
+
+                <article class="admin-stat-card">
+                    <strong id="documentsCommentedCount">0</strong>
+                    <span>Commentés</span>
+                </article>
+
+                <article class="admin-stat-card admin-stat-warning">
+                    <strong id="documentsRecentCount">0</strong>
+                    <span>Récents</span>
+                </article>
+            </section>
+
+            <!-- TABLEAU DOCUMENTS -->
+            <section class="admin-documents-panel" aria-labelledby="admin-documents-list-title">
+                <div class="admin-panel-header">
+                    <h2 id="admin-documents-list-title">Documents déposés</h2>
+
+                    <div class="admin-documents-tools">
+                        <input id="adminDocumentSearchInput" class="admin-search-input" type="search"
+                            placeholder="Rechercher document, projet ou client..."
+                            aria-label="Rechercher un document" />
+
+                        <select id="adminDocumentStatusFilter" class="admin-filter-select"
+                            aria-label="Filtrer par statut">
+                            <option value="ALL">Tous</option>
+                            <option value="TO_REVIEW">À vérifier</option>
+                            <option value="COMMENTED">Commentés</option>
+                            <option value="RECENT">Récents</option>
+                        </select>
+
+                        <select id="adminDocumentTypeFilter" class="admin-filter-select" aria-label="Filtrer par type">
+                            <option value="ALL">Tous types</option>
+                            <option value="PDF">PDF</option>
+                            <option value="IMAGE">Image</option>
+                            <option value="OTHER">Autre</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="admin-table-wrapper">
+                    <table class="admin-documents-table">
+                        <thead>
+                            <tr>
+                                <th>Document</th>
+                                <th>Projet</th>
+                                <th>Client(s)</th>
+                                <th>Type</th>
+                                <th>Taille</th>
+                                <th>Déposé</th>
+                                <th>Commentaire admin</th>
+                                <th>Statut</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="adminDocumentsTableBody">
+                            <!-- Rempli par admin-documents.js -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </section>
+
+        <!-- MODALE COMMENTAIRE DOCUMENT -->
+        <div class="admin-document-modal hidden" id="adminDocumentModal" role="dialog" aria-modal="true"
+            aria-labelledby="adminDocumentModalTitle">
+            <div class="admin-document-modal-backdrop" id="adminDocumentModalBackdrop"></div>
+
+            <section class="admin-document-modal-card">
+                <div class="admin-document-modal-header">
+                    <h2 id="adminDocumentModalTitle">Commenter un document</h2>
+
+                    <button type="button" class="admin-document-modal-close" id="closeAdminDocumentModalButton"
+                        aria-label="Fermer">
+                        ×
+                    </button>
+                </div>
+
+                <form id="adminDocumentCommentForm" class="admin-document-form">
+                    <input type="hidden" id="adminDocumentId" />
+
+                    <div class="admin-document-context">
+                        <p>
+                            <strong>Document :</strong>
+                            <span id="adminDocumentName">-</span>
+                        </p>
+
+                        <p>
+                            <strong>Projet :</strong>
+                            <span id="adminDocumentProject">-</span>
+                        </p>
+
+                        <p>
+                            <strong>Client(s) :</strong>
+                            <span id="adminDocumentClients">-</span>
+                        </p>
+                    </div>
+
+                    <div class="admin-document-form-group">
+                        <label for="adminDocumentComment">Commentaire admin</label>
+                        <textarea id="adminDocumentComment" rows="5"
+                            placeholder="Ex : À comparer avec l’autre devis, vérifier les horaires, document validé..."></textarea>
+                    </div>
+
+                    <p class="admin-document-form-hint">
+                        Ce commentaire sera visible côté client dans la page Documents.
+                    </p>
+
+                    <div class="admin-document-form-actions">
+                        <button type="button" class="admin-document-cancel-button" id="cancelAdminDocumentButton">
+                            Annuler
+                        </button>
+
+                        <button type="submit" class="admin-document-save-button">
+                            Enregistrer le commentaire
+                        </button>
+                    </div>
+                </form>
+            </section>
+        </div>
+    </main>
+</body>
+
+</html>

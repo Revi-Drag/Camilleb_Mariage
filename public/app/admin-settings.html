@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Admin - Paramètres - Camille B.</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Montserrat:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet" />
+
+    <link rel="stylesheet" href="/app/css/landing.css" />
+    <script src="/app/js/admin-settings.js" defer></script>
+</head>
+
+<body>
+    <main class="admin-page">
+        <!-- HEADER ADMIN -->
+        <header class="admin-header">
+            <nav class="admin-nav" aria-label="Navigation administrateur">
+                <div class="admin-nav-left">
+                    <a href="/app/">Accueil</a>
+                    <a href="/app/admin-dashboard.html">Projets</a>
+                    <a href="/app/admin-clients.html">Clients</a>
+                    <a href="/app/admin-documents.html">Documents</a>
+                    <a href="/app/admin-settings.html">Paramètres</a>
+                </div>
+
+                <div class="admin-nav-right">
+                    <a href="/app/#contact">Contact</a>
+                </div>
+            </nav>
+        </header>
+
+        <!-- IDENTITÉ ADMIN -->
+        <section class="admin-identity" aria-label="Espace administrateur">
+            <div class="admin-logo" aria-hidden="true">CB</div>
+
+            <span class="admin-space-badge">
+                Espace admin
+            </span>
+        </section>
+
+        <!-- PARAMÈTRES -->
+        <section class="admin-settings-shell" aria-labelledby="admin-settings-title">
+            <header class="admin-settings-header">
+                <div>
+                    <p class="admin-eyebrow">Configuration générale</p>
+                    <h1 id="admin-settings-title">Paramètres</h1>
+                </div>
+
+                <button type="button" class="admin-primary-button" id="saveAllSettingsButton">
+                    Enregistrer
+                </button>
+            </header>
+
+            <div class="admin-settings-grid">
+                <!-- COMPTE ADMIN -->
+                <section class="admin-settings-card" aria-labelledby="admin-account-title">
+                    <h2 id="admin-account-title">Compte admin</h2>
+
+                    <form class="admin-settings-form" id="adminAccountForm">
+                        <div class="admin-settings-form-group">
+                            <label for="adminDisplayName">Nom affiché</label>
+                            <input id="adminDisplayName" type="text" value="Camille B." />
+                        </div>
+
+                        <div class="admin-settings-form-group">
+                            <label for="adminEmail">Email admin</label>
+                            <input id="adminEmail" type="email" value="contact@camilleb-mariage.fr" />
+                        </div>
+
+                        <div class="admin-settings-form-group">
+                            <label for="adminPhone">Téléphone professionnel</label>
+                            <input id="adminPhone" type="tel" value="06 00 00 00 00" />
+                        </div>
+
+                        <div class="admin-settings-form-group">
+                            <label for="adminNewPassword">Nouveau mot de passe</label>
+                            <input id="adminNewPassword" type="password" placeholder="Laisser vide si inchangé" />
+                        </div>
+                    </form>
+                </section>
+
+                <!-- INFORMATIONS PUBLIQUES -->
+                <section class="admin-settings-card" aria-labelledby="public-info-title">
+                    <h2 id="public-info-title">Informations publiques</h2>
+
+                    <form class="admin-settings-form" id="publicInfoForm">
+                        <div class="admin-settings-form-group">
+                            <label for="businessName">Nom de l’activité</label>
+                            <input id="businessName" type="text" value="Camille B." />
+                        </div>
+
+                        <div class="admin-settings-form-group">
+                            <label for="businessRole">Métier</label>
+                            <input id="businessRole" type="text" value="Conseillère mariage" />
+                        </div>
+
+                        <div class="admin-settings-form-group">
+                            <label for="businessArea">Zone d’intervention</label>
+                            <input id="businessArea" type="text" value="Normandie et alentours" />
+                        </div>
+
+                        <div class="admin-settings-form-group">
+                            <label for="businessDescription">Présentation courte</label>
+                            <textarea id="businessDescription"
+                                rows="4">Accompagnement personnalisé des futurs mariés dans l’organisation de leur journée.</textarea>
+                        </div>
+                    </form>
+                </section>
+
+                <!-- DOCUMENTS & SÉCURITÉ -->
+                <section class="admin-settings-card admin-settings-card-wide"
+                    aria-labelledby="documents-security-title">
+                    <h2 id="documents-security-title">Documents & sécurité</h2>
+
+                    <div class="admin-settings-two-columns">
+                        <form class="admin-settings-form" id="documentsSettingsForm">
+                            <div class="admin-settings-form-group">
+                                <label for="acceptedFormats">Formats acceptés</label>
+                                <input id="acceptedFormats" type="text" value="PDF, JPG, PNG, DOCX" />
+                            </div>
+
+                            <div class="admin-settings-form-group">
+                                <label for="maxFileSize">Taille maximale conseillée</label>
+                                <input id="maxFileSize" type="text" value="5 Mo" />
+                            </div>
+
+                            <div class="admin-settings-form-group">
+                                <label for="uploadDirectory">Dossier de stockage</label>
+                                <input id="uploadDirectory" type="text" value="/public/uploads/documents" disabled />
+                            </div>
+
+                            <div class="admin-settings-form-group">
+                                <label for="uploadHelpMessage">Message d’aide côté client</label>
+                                <textarea id="uploadHelpMessage"
+                                    rows="3">Ajoutez ici vos devis, contrats, inspirations ou documents utiles au suivi de votre projet mariage.</textarea>
+                            </div>
+                        </form>
+
+                        <aside class="admin-security-box">
+                            <h3>Rôles disponibles</h3>
+
+                            <ul>
+                                <li><strong>ROLE_ADMIN</strong> — gestion des projets, clients et documents</li>
+                                <li><strong>ROLE_CLIENT</strong> — accès à l’espace client</li>
+                            </ul>
+
+                            <button type="button" class="admin-secondary-button admin-logout-button"
+                                id="adminLogoutButton">
+                                Déconnexion
+                            </button>
+                        </aside>
+                    </div>
+                </section>
+            </div>
+
+            <p id="adminSettingsMessage" class="admin-settings-message" aria-live="polite"></p>
+        </section>
+    </main>
+</body>
+
+</html>

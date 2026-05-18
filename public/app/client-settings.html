@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Paramètres client - Camille B.</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Montserrat:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet" />
+
+    <link rel="stylesheet" href="/app/css/landing.css" />
+    <script src="/app/js/client-settings.js" defer></script>
+</head>
+
+<body>
+    <main class="client-page">
+        <!-- HEADER CLIENT -->
+        <header class="client-header">
+            <nav class="client-nav" aria-label="Navigation espace client">
+                <div class="client-nav-left">
+                    <a href="/app/">Accueil</a>
+                    <a href="/app/client-dashboard.html">Projets</a>
+                    <a href="/app/client-guests.html">Invités</a>
+                    <a href="/app/client-budget.html">Budget</a>
+                    <a href="/app/client-tasks.html">Tâches</a>
+                    <a href="/app/client-documents.html">Documents</a>
+                    <a href="/app/client-settings.html">Paramètres</a>
+                </div>
+
+                <div class="client-nav-right">
+                    <a href="/app/#contact">Contact</a>
+                </div>
+            </nav>
+        </header>
+
+        <!-- IDENTITÉ -->
+        <section class="client-identity client-settings-identity" aria-label="Espace client">
+            <div class="client-logo" aria-hidden="true">CB</div>
+        </section>
+
+        <!-- PARAMÈTRES CLIENT -->
+        <section class="client-settings-shell" aria-labelledby="client-settings-title">
+            <header class="client-settings-header">
+                <div>
+                    <p class="client-settings-eyebrow">Mon espace personnel</p>
+                    <h1 id="client-settings-title">Paramètres</h1>
+                </div>
+            </header>
+
+            <div class="client-settings-grid">
+                <!-- INFORMATIONS DE CONTACT -->
+                <section class="client-settings-card" aria-labelledby="client-contact-title">
+                    <h2 id="client-contact-title">Informations de contact</h2>
+
+                    <form id="clientContactForm" class="client-settings-form">
+                        <div class="client-settings-form-group">
+                            <label for="clientEmail">Adresse email</label>
+                            <input id="clientEmail" type="email" value="client@test.fr" required />
+                        </div>
+
+                        <div class="client-settings-form-group">
+                            <label for="clientPhone">Numéro de téléphone</label>
+                            <input id="clientPhone" type="tel" value="06 00 00 00 00"
+                                placeholder="Ex : 06 12 34 56 78" />
+                        </div>
+
+                        <button type="submit" class="client-settings-primary-button">
+                            Enregistrer les informations
+                        </button>
+
+                        <p id="clientContactMessage" class="client-settings-message" aria-live="polite"></p>
+                    </form>
+                </section>
+
+                <!-- SÉCURITÉ -->
+                <section class="client-settings-card" aria-labelledby="client-security-title">
+                    <h2 id="client-security-title">Sécurité</h2>
+
+                    <form id="clientPasswordForm" class="client-settings-form">
+                        <div class="client-settings-form-group">
+                            <label for="currentPassword">Mot de passe actuel</label>
+                            <input id="currentPassword" type="password" autocomplete="current-password"
+                                placeholder="Votre mot de passe actuel" />
+                        </div>
+
+                        <div class="client-settings-form-group">
+                            <label for="newPassword">Nouveau mot de passe</label>
+                            <input id="newPassword" type="password" autocomplete="new-password"
+                                placeholder="Nouveau mot de passe" />
+                        </div>
+
+                        <div class="client-settings-form-group">
+                            <label for="confirmPassword">Confirmation</label>
+                            <input id="confirmPassword" type="password" autocomplete="new-password"
+                                placeholder="Confirmer le nouveau mot de passe" />
+                        </div>
+
+                        <button type="submit" class="client-settings-primary-button">
+                            Modifier le mot de passe
+                        </button>
+
+                        <p id="clientPasswordMessage" class="client-settings-message" aria-live="polite"></p>
+                    </form>
+
+                    <div class="client-settings-logout-zone">
+                        <button type="button" class="client-settings-secondary-button" id="clientLogoutButton">
+                            Déconnexion
+                        </button>
+                    </div>
+                </section>
+            </div>
+        </section>
+    </main>
+</body>
+
+</html>

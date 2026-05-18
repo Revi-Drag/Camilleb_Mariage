@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Admin - Clients - Camille B.</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Montserrat:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet" />
+
+    <link rel="stylesheet" href="/app/css/landing.css" />
+    <script src="/app/js/admin-clients.js" defer></script>
+</head>
+
+<body>
+    <main class="admin-page">
+        <!-- HEADER ADMIN -->
+        <header class="admin-header">
+            <nav class="admin-nav" aria-label="Navigation administrateur">
+                <div class="admin-nav-left">
+                    <a href="/app/">Accueil</a>
+                    <a href="/app/admin-dashboard.html">Projets</a>
+                    <a href="/app/admin-clients.html">Clients</a>
+                    <a href="/app/admin-documents.html">Documents</a>
+                    <a href="/app/admin-settings.html">Paramètres</a>
+                </div>
+
+                <div class="admin-nav-right">
+                    <a href="/app/#contact">Contact</a>
+                </div>
+            </nav>
+        </header>
+
+        <!-- IDENTITÉ ADMIN -->
+        <section class="admin-identity" aria-label="Espace administrateur">
+            <div class="admin-logo" aria-hidden="true">CB</div>
+
+            <span class="admin-space-badge">
+                Espace admin
+            </span>
+        </section>
+
+        <!-- PAGE CLIENTS -->
+        <section class="admin-clients-shell" aria-labelledby="admin-clients-title">
+            <header class="admin-clients-header">
+                <div>
+                    <p class="admin-eyebrow">Gestion des accès client</p>
+                    <h1 id="admin-clients-title">Clients</h1>
+                </div>
+
+                <button type="button" class="admin-primary-button" id="openAddClientButton">
+                    + Créer un client
+                </button>
+            </header>
+
+            <!-- CARTES RÉSUMÉ -->
+            <section class="admin-clients-stats" aria-label="Résumé clients">
+                <article class="admin-stat-card">
+                    <strong id="clientsTotalCount">0</strong>
+                    <span>Clients total</span>
+                </article>
+
+                <article class="admin-stat-card">
+                    <strong id="clientsActiveCount">0</strong>
+                    <span>Comptes actifs</span>
+                </article>
+
+                <article class="admin-stat-card admin-stat-warning">
+                    <strong id="clientsPendingCount">0</strong>
+                    <span>Accès à créer</span>
+                </article>
+
+                <article class="admin-stat-card admin-stat-alert">
+                    <strong id="clientsInactiveCount">0</strong>
+                    <span>Comptes inactifs</span>
+                </article>
+            </section>
+
+            <!-- OUTILS TABLE -->
+            <section class="admin-clients-panel" aria-labelledby="admin-clients-list-title">
+                <div class="admin-panel-header">
+                    <h2 id="admin-clients-list-title">Liste des clients</h2>
+
+                    <div class="admin-table-tools">
+                        <input id="adminClientSearchInput" class="admin-search-input" type="search"
+                            placeholder="Rechercher un client, email ou projet..." aria-label="Rechercher un client" />
+
+                        <select id="adminClientStatusFilter" class="admin-filter-select"
+                            aria-label="Filtrer par statut">
+                            <option value="ALL">Tous</option>
+                            <option value="ACTIVE">Actifs</option>
+                            <option value="PENDING">À créer</option>
+                            <option value="INACTIVE">Inactifs</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- TABLE CLIENTS -->
+                <div class="admin-table-wrapper">
+                    <table class="admin-clients-table">
+                        <thead>
+                            <tr>
+                                <th>Client</th>
+                                <th>Email</th>
+                                <th>Téléphone</th>
+                                <th>Projet associé</th>
+                                <th>Statut compte</th>
+                                <th>Dernière activité</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="adminClientsTableBody">
+                            <!-- Rempli par admin-clients.js -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </section>
+
+        <!-- MODALE AJOUT / MODIFICATION CLIENT -->
+        <div class="admin-client-modal hidden" id="adminClientModal" role="dialog" aria-modal="true"
+            aria-labelledby="adminClientModalTitle">
+            <div class="admin-client-modal-backdrop" id="adminClientModalBackdrop"></div>
+
+            <section class="admin-client-modal-card">
+                <div class="admin-client-modal-header">
+                    <h2 id="adminClientModalTitle">Créer un client</h2>
+
+                    <button type="button" class="admin-client-modal-close" id="closeAdminClientModalButton"
+                        aria-label="Fermer">
+                        ×
+                    </button>
+                </div>
+
+                <form id="adminClientForm" class="admin-client-form">
+                    <input type="hidden" id="clientId" />
+
+                    <div class="admin-client-form-grid">
+                        <div class="admin-client-form-group">
+                            <label for="clientFirstName">Prénom</label>
+                            <input id="clientFirstName" type="text" required placeholder="Ex : Marie" />
+                        </div>
+
+                        <div class="admin-client-form-group">
+                            <label for="clientLastName">Nom</label>
+                            <input id="clientLastName" type="text" required placeholder="Ex : Dupont" />
+                        </div>
+                    </div>
+
+                    <div class="admin-client-form-group">
+                        <label for="clientEmail">Email</label>
+                        <input id="clientEmail" type="email" required placeholder="Ex : marie@email.fr" />
+                    </div>
+
+                    <div class="admin-client-form-group">
+                        <label for="clientPhone">Téléphone</label>
+                        <input id="clientPhone" type="tel" placeholder="Ex : 06 12 34 56 78" />
+                    </div>
+
+                    <div class="admin-client-form-group">
+                        <label for="clientProject">Projet associé</label>
+                        <select id="clientProject" required>
+                            <option value="">Sélectionner un projet</option>
+                            <option value="Mariage Marie & Lucas">Mariage Marie & Lucas</option>
+                            <option value="Mariage clients test">Mariage clients test</option>
+                            <option value="Mariage Emma & Julien">Mariage Emma & Julien</option>
+                            <option value="Mariage Clara & Mehdi">Mariage Clara & Mehdi</option>
+                            <option value="Mariage Sophie & Antoine">Mariage Sophie & Antoine</option>
+                        </select>
+                    </div>
+
+                    <div class="admin-client-form-group">
+                        <label for="clientStatus">Statut du compte</label>
+                        <select id="clientStatus">
+                            <option value="ACTIVE">Actif</option>
+                            <option value="PENDING">Accès à créer</option>
+                            <option value="INACTIVE">Inactif</option>
+                        </select>
+                    </div>
+
+                    <div class="admin-client-form-group" id="temporaryPasswordGroup">
+                        <label for="clientTemporaryPassword">Mot de passe temporaire</label>
+                        <input id="clientTemporaryPassword" type="text"
+                            placeholder="Laisser vide pour générer plus tard" />
+                    </div>
+
+                    <p class="admin-client-form-hint">
+                        En V1, cette interface prépare la gestion des comptes clients. Le branchement API permettra
+                        ensuite de créer réellement l’utilisateur Symfony.
+                    </p>
+
+                    <div class="admin-client-form-actions">
+                        <button type="button" class="admin-client-cancel-button" id="cancelAdminClientButton">
+                            Annuler
+                        </button>
+
+                        <button type="submit" class="admin-client-save-button">
+                            Enregistrer
+                        </button>
+                    </div>
+                </form>
+            </section>
+        </div>
+    </main>
+</body>
+
+</html>

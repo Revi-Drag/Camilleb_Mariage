@@ -4372,3 +4372,91 @@ button {
     color: var(--green-dark);
     background: rgba(250, 241, 230, 0.52);
 }
+
+/* ==========================================================
+   ESPACE CLIENT - INVITÉS - FILTRE STATUT
+   ========================================================== */
+
+.guests-filter-row {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin: 14px 0 20px;
+}
+
+.guests-filter-select {
+    min-width: 190px;
+    height: 36px;
+    border: 1px solid var(--green-dark);
+    border-radius: 999px;
+    background: var(--cream);
+    color: var(--green-dark);
+    padding: 0 14px;
+    font-family: "Montserrat", Arial, sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.guests-filter-select:focus {
+    outline: 2px solid rgba(41, 60, 4, 0.25);
+    outline-offset: 2px;
+}
+
+@media (max-width: 720px) {
+    .guests-filter-row {
+        justify-content: stretch;
+    }
+
+    .guests-filter-select {
+        width: 100%;
+    }
+}
+
+/* ==========================================================
+   ESPACE CLIENT - INVITÉS - EMAIL / TABLE
+   ========================================================== */
+
+.guests-table {
+    table-layout: fixed;
+}
+
+.guests-table th:nth-child(1),
+.guests-table td:nth-child(1) {
+    width: 18%;
+}
+
+.guests-table th:nth-child(2),
+.guests-table td:nth-child(2) {
+    width: 22%;
+}
+
+.guests-table th:nth-child(3),
+.guests-table td:nth-child(3) {
+    width: 16%;
+}
+
+.guests-table th:nth-child(4),
+.guests-table td:nth-child(4) {
+    width: 14%;
+}
+
+.guests-table th:nth-child(5),
+.guests-table td:nth-child(5) {
+    width: 18%;
+}
+
+.guests-table th:nth-child(6),
+.guests-table td:nth-child(6) {
+    width: 12%;
+}
+
+.guests-table td:nth-child(2) {
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    line-height: 1.25;
+    font-size: 12px;
+}
+
+.guest-row-actions button {
+    min-height: 22px;
+}

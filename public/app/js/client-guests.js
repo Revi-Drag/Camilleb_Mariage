@@ -2,95 +2,33 @@ document.addEventListener("DOMContentLoaded", () => {
     initGuestsPage();
 });
 
+const API_BASE_URL = "";
+
 const guestsState = {
-    guests: [
-        {
-            id: 1,
-            name: "Jaque",
-            food: "",
-            status: "REFUSED",
-            comment: "",
-        },
-        {
-            id: 2,
-            name: "Fanfan",
-            food: "Allergique au poissons",
-            status: "CONFIRMED",
-            comment: "",
-        },
-        {
-            id: 3,
-            name: "Jaqueline",
-            food: "",
-            status: "CONFIRMED",
-            comment: "",
-        },
-        {
-            id: 4,
-            name: "Eric",
-            food: "",
-            status: "CONFIRMED",
-            comment: "Vient avec enfants",
-        },
-        {
-            id: 5,
-            name: "Jean-Pierre",
-            food: "Végétarien",
-            status: "REFUSED",
-            comment: "",
-        },
-        {
-            id: 6,
-            name: "Marie",
-            food: "",
-            status: "PENDING",
-            comment: "",
-        },
-        {
-            id: 7,
-            name: "Henry",
-            food: "",
-            status: "PENDING",
-            comment: "",
-        },
-        {
-            id: 8,
-            name: "Martine",
-            food: "Intolérante au lactose",
-            status: "PENDING",
-            comment: "",
-        },
-        {
-            id: 9,
-            name: "Emeric",
-            food: "",
-            status: "CONFIRMED",
-            comment: "",
-        },
-        {
-            id: 10,
-            name: "Jean-Yve",
-            food: "",
-            status: "CONFIRMED",
-            comment: "",
-        },
-        {
-            id: 11,
-            name: "Roger",
-            food: "",
-            status: "CONFIRMED",
-            comment: "",
-        },
-    ],
     search: "",
+    statusFilter: "ALL",
+    currentProjectId: null,
+    guests: [],
 };
 
-function initGuestsPage() {
-    renderGuests();
+async function initGuestsPage() {
+    bindGuestsEvents();
 
+    try {
+        await loadCurrentProject();
+        await loadGuests();
+        renderGuestsPage();
+    } catch (error) {
+        console.error("Erreur initialisation invités :", error);
+        alert("Impossible de charger les invités. Vérifie que tu es connecté.");
+    }
+}
+
+function bindGuestsEvents() {
     const searchInput = document.querySelector("#guestSearchInput");
-    const searchButton = document.querySelector("#guestSearchButton");
+    const statusFilter = document.querySelector("#guestStatusFilter");
     const openAddButton = document.querySelector("#openAddGuestButton");
+
     const closeButton = document.querySelector("#closeGuestModalButton");
     const cancelButton = document.querySelector("#cancelGuestButton");
     const backdrop = document.querySelector("#guestModalBackdrop");
@@ -99,14 +37,14 @@ function initGuestsPage() {
     if (searchInput) {
         searchInput.addEventListener("input", () => {
             guestsState.search = searchInput.value.trim().toLowerCase();
-            renderGuests();
+            renderGuestsTable();
         });
     }
 
-    if (searchButton) {
-        searchButton.addEventListener("click", () => {
-            guestsState.search = searchInput ? searchInput.value.trim().toLowerCase() : "";
-            renderGuests();
+    if (statusFilter) {
+        statusFilter.addEventListener("change", () => {
+            guestsState.statusFilter = statusFilter.value;
+            renderGuestsTable();
         });
     }
 
@@ -133,7 +71,147 @@ function initGuestsPage() {
     }
 }
 
-function renderGuests() {
+/* ==========================================================
+   API
+   ========================================================== */
+
+async function loadCurrentProject() {
+    const response = await fetch(`${API_BASE_URL}/api/client/projets`, {
+        method: "GET",
+        credentials: "include",
+        headers: {
+            Accept: "application/json",
+        },
+    });
+
+    const data = await parseJsonResponse(response);
+
+    if (!response.ok) {
+        throw new Error(data.error || "Impossible de charger le projet client.");
+    }
+
+    if (!Array.isArray(data) || data.length === 0) {
+        throw new Error("Aucun projet mariage associé à ce client.");
+    }
+
+    guestsState.currentProjectId = data[0].id;
+}
+
+async function loadGuests() {
+    const response = await fetch(`${API_BASE_URL}/api/client/invites`, {
+        method: "GET",
+        credentials: "include",
+        headers: {
+            Accept: "application/json",
+        },
+    });
+
+    const data = await parseJsonResponse(response);
+
+    if (!response.ok) {
+        throw new Error(data.error || "Impossible de charger les invités.");
+    }
+
+    guestsState.guests = Array.isArray(data) ? data.map(mapApiGuestToFrontGuest) : [];
+}
+
+async function createGuest(payload) {
+    const response = await fetch(`${API_BASE_URL}/api/client/invites`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+    });
+
+    const data = await parseJsonResponse(response);
+
+    if (!response.ok || data.success === false) {
+        throw new Error(data.error || "Impossible de créer l’invité.");
+    }
+
+    return data.invite;
+}
+
+async function updateGuest(id, payload) {
+    const response = await fetch(`${API_BASE_URL}/api/client/invites/${id}`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+    });
+
+    const data = await parseJsonResponse(response);
+
+    if (!response.ok || data.success === false) {
+        throw new Error(data.error || "Impossible de modifier l’invité.");
+    }
+
+    return data.invite;
+}
+
+async function deleteGuestApi(id) {
+    const response = await fetch(`${API_BASE_URL}/api/client/invites/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+        headers: {
+            Accept: "application/json",
+        },
+    });
+
+    const data = await parseJsonResponse(response);
+
+    if (!response.ok || data.success === false) {
+        throw new Error(data.error || "Impossible de supprimer l’invité.");
+    }
+
+    return data;
+}
+
+async function parseJsonResponse(response) {
+    const text = await response.text();
+
+    if (!text) {
+        return {};
+    }
+
+    try {
+        return JSON.parse(text);
+    } catch (error) {
+        console.error("Réponse non JSON :", text);
+        throw new Error("Réponse serveur invalide.");
+    }
+}
+
+/* ==========================================================
+   RENDU
+   ========================================================== */
+
+function renderGuestsPage() {
+    renderGuestsStats();
+    renderGuestsTable();
+}
+
+function renderGuestsStats() {
+    const guests = guestsState.guests;
+
+    const total = guests.length;
+    const confirmed = guests.filter((guest) => guest.status === "CONFIRMED").length;
+    const pending = guests.filter((guest) => guest.status === "PENDING").length;
+    const refused = guests.filter((guest) => guest.status === "REFUSED").length;
+
+    setText("#guestsTotalCount", total);
+    setText("#guestsConfirmedCount", confirmed);
+    setText("#guestsPendingCount", pending);
+    setText("#guestsRefusedCount", refused);
+}
+
+function renderGuestsTable() {
     const tableBody = document.querySelector("#guestsTableBody");
 
     if (!tableBody) {
@@ -144,32 +222,48 @@ function renderGuests() {
 
     tableBody.innerHTML = "";
 
+    if (guests.length === 0) {
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+      <td colspan="6" class="guests-empty-cell">
+        Aucun invité à afficher.
+      </td>
+    `;
+
+        tableBody.appendChild(tr);
+        renderGuestsStats();
+        return;
+    }
+
     guests.forEach((guest) => {
         const tr = document.createElement("tr");
 
         tr.innerHTML = `
-      <td>${escapeHtml(guest.name)}</td>
-      <td>${escapeHtml(guest.food || "")}</td>
-      <td class="${getStatusCellClass(guest.status)}">
-        <strong>${getStatusLabel(guest.status)}</strong>
+      <td>
+        <strong class="guest-name-cell">${escapeHtml(guest.name)}</strong>
       </td>
-      <td class="status-action-cell">
-        ${guest.status !== "REFUSED"
-                ? `<button type="button" class="status-action-button refused" data-action="refuse" data-id="${guest.id}">Refusé</button>`
-                : ""
-            }
+
+      <td>${escapeHtml(guest.email || "-")}</td>
+
+      <td>${escapeHtml(guest.phone || "-")}</td>
+
+      <td>
+        <span class="guest-status-pill ${getStatusClass(guest.status)}">
+          ${getStatusLabel(guest.status)}
+        </span>
       </td>
-      <td class="status-action-cell">
-        ${guest.status !== "CONFIRMED"
-                ? `<button type="button" class="status-action-button confirmed" data-action="confirm" data-id="${guest.id}">Confirmé</button>`
-                : ""
-            }
+
+      <td class="guest-comment-cell">
+        ${escapeHtml(formatGuestNotes(guest))}
       </td>
-      <td>${escapeHtml(guest.comment || "")}</td>
+
       <td>
         <div class="guest-row-actions">
-          <button type="button" data-action="edit" data-id="${guest.id}">Modifier</button>
-          <button type="button" data-action="delete" data-id="${guest.id}">Supprimer</button>
+          <button type="button" data-guest-action="confirm" data-id="${guest.id}">Confirmer</button>
+          <button type="button" data-guest-action="refuse" data-id="${guest.id}">Refuser</button>
+          <button type="button" data-guest-action="edit" data-id="${guest.id}">Modifier</button>
+          <button type="button" data-guest-action="delete" data-id="${guest.id}">Supprimer</button>
         </div>
       </td>
     `;
@@ -177,94 +271,81 @@ function renderGuests() {
         tableBody.appendChild(tr);
     });
 
-    bindRowActions();
-    renderGuestStats();
+    bindGuestRowActions();
+    renderGuestsStats();
 }
 
 function getFilteredGuests() {
-    if (!guestsState.search) {
-        return guestsState.guests;
-    }
-
     return guestsState.guests.filter((guest) => {
-        const haystack = [
-            guest.name,
-            guest.food,
-            guest.status,
-            guest.comment,
-            getStatusLabel(guest.status),
-        ]
-            .join(" ")
-            .toLowerCase();
-
-        return haystack.includes(guestsState.search);
+        return matchesGuestSearch(guest) && matchesGuestStatusFilter(guest);
     });
 }
 
-function bindRowActions() {
-    const buttons = document.querySelectorAll("[data-action][data-id]");
+function matchesGuestSearch(guest) {
+    if (!guestsState.search) {
+        return true;
+    }
+
+    const haystack = [
+        guest.name,
+        guest.email,
+        guest.phone,
+        guest.status,
+        guest.foodRestrictions,
+        guest.comment,
+        getStatusLabel(guest.status),
+    ]
+        .join(" ")
+        .toLowerCase();
+
+    return haystack.includes(guestsState.search);
+}
+
+function matchesGuestStatusFilter(guest) {
+    if (guestsState.statusFilter === "ALL") {
+        return true;
+    }
+
+    return guest.status === guestsState.statusFilter;
+}
+
+/* ==========================================================
+   ACTIONS
+   ========================================================== */
+
+function bindGuestRowActions() {
+    const buttons = document.querySelectorAll("[data-guest-action][data-id]");
 
     buttons.forEach((button) => {
-        button.addEventListener("click", () => {
+        button.addEventListener("click", async () => {
             const id = Number(button.dataset.id);
-            const action = button.dataset.action;
+            const action = button.dataset.guestAction;
 
             if (action === "confirm") {
-                updateGuestStatus(id, "CONFIRMED");
+                await updateGuestStatus(id, "confirme");
                 return;
             }
 
             if (action === "refuse") {
-                updateGuestStatus(id, "REFUSED");
+                await updateGuestStatus(id, "refuse");
                 return;
             }
 
             if (action === "edit") {
                 const guest = findGuestById(id);
+
                 if (guest) {
                     openGuestModal(guest);
                 }
+
                 return;
             }
 
             if (action === "delete") {
-                deleteGuest(id);
+                await deleteGuest(id);
             }
         });
     });
-}
-
-function updateGuestStatus(id, status) {
-    const guest = findGuestById(id);
-
-    if (!guest) {
-        return;
-    }
-
-    guest.status = status;
-    renderGuests();
-
-    /*
-      À brancher plus tard :
-      PATCH /api/client/invites/{id}
-      body: { statut: status }
-    */
-}
-
-function deleteGuest(id) {
-    const confirmed = window.confirm("Supprimer cet invité ?");
-
-    if (!confirmed) {
-        return;
-    }
-
-    guestsState.guests = guestsState.guests.filter((guest) => guest.id !== id);
-    renderGuests();
-
-    /*
-      À brancher plus tard :
-      DELETE /api/client/invites/{id}
-    */
 }
 
 function openGuestModal(guest = null) {
@@ -275,11 +356,13 @@ function openGuestModal(guest = null) {
         return;
     }
 
-    document.querySelector("#guestId").value = guest ? guest.id : "";
-    document.querySelector("#guestName").value = guest ? guest.name : "";
-    document.querySelector("#guestFood").value = guest ? guest.food : "";
-    document.querySelector("#guestStatus").value = guest ? guest.status : "PENDING";
-    document.querySelector("#guestComment").value = guest ? guest.comment : "";
+    setInputValue("#guestId", guest ? guest.id : "");
+    setInputValue("#guestName", guest ? guest.name : "");
+    setInputValue("#guestEmail", guest ? guest.email : "");
+    setInputValue("#guestPhone", guest ? guest.phone : "");
+    setInputValue("#guestStatus", guest ? guest.status : "PENDING");
+    setInputValue("#guestFoodRestrictions", guest ? guest.foodRestrictions : "");
+    setInputValue("#guestComment", guest ? guest.comment : "");
 
     if (title) {
         title.textContent = guest ? "Modifier un invité" : "Ajouter un invité";
@@ -298,71 +381,139 @@ function closeGuestModal() {
     modal.classList.add("hidden");
 }
 
-function handleGuestFormSubmit(event) {
+async function handleGuestFormSubmit(event) {
     event.preventDefault();
 
-    const id = document.querySelector("#guestId").value;
-    const name = document.querySelector("#guestName").value.trim();
-    const food = document.querySelector("#guestFood").value.trim();
-    const status = document.querySelector("#guestStatus").value;
-    const comment = document.querySelector("#guestComment").value.trim();
+    const id = getInputValue("#guestId");
+    const name = getInputValue("#guestName").trim();
+    const email = getInputValue("#guestEmail").trim();
+    const phone = getInputValue("#guestPhone").trim();
+    const status = getInputValue("#guestStatus");
+    const foodRestrictions = getInputValue("#guestFoodRestrictions").trim();
+    const comment = getInputValue("#guestComment").trim();
 
     if (!name) {
         alert("Le nom de l’invité est obligatoire.");
         return;
     }
 
-    if (id) {
-        const guest = findGuestById(Number(id));
-
-        if (guest) {
-            guest.name = name;
-            guest.food = food;
-            guest.status = status;
-            guest.comment = comment;
-        }
-    } else {
-        guestsState.guests.push({
-            id: getNextGuestId(),
-            name,
-            food,
-            status,
-            comment,
-        });
+    if (!guestsState.currentProjectId) {
+        alert("Aucun projet mariage trouvé pour créer l’invité.");
+        return;
     }
 
-    closeGuestModal();
-    renderGuests();
+    const payload = {
+        nom: name,
+        email: email || null,
+        telephone: phone || null,
+        statut: mapFrontStatusToApi(status),
+        regimeAlimentaire: foodRestrictions || null,
+        notes: comment || null,
+        projetMariageId: guestsState.currentProjectId,
+    };
 
-    /*
-      À brancher plus tard :
-      POST /api/client/invites
-      PATCH /api/client/invites/{id}
-    */
+    try {
+        if (id) {
+            await updateGuest(Number(id), payload);
+        } else {
+            await createGuest(payload);
+        }
+
+        closeGuestModal();
+        await loadGuests();
+        renderGuestsPage();
+    } catch (error) {
+        console.error("Erreur enregistrement invité :", error);
+        alert(error.message);
+    }
 }
 
-function renderGuestStats() {
-    const total = guestsState.guests.length;
-    const pending = guestsState.guests.filter((guest) => guest.status === "PENDING").length;
-    const refused = guestsState.guests.filter((guest) => guest.status === "REFUSED").length;
-    const confirmed = guestsState.guests.filter((guest) => guest.status === "CONFIRMED").length;
+async function updateGuestStatus(id, apiStatus) {
+    const guest = findGuestById(id);
 
-    setText("#totalGuestsCount", total);
-    setText("#pendingGuestsCount", pending);
-    setText("#refusedGuestsCount", refused);
-    setText("#confirmedGuestsCount", confirmed);
+    if (!guest) {
+        return;
+    }
+
+    const payload = {
+        nom: guest.name,
+        email: guest.email || null,
+        telephone: guest.phone || null,
+        statut: apiStatus,
+        regimeAlimentaire: guest.foodRestrictions || null,
+        notes: guest.comment || null,
+        projetMariageId: guestsState.currentProjectId,
+    };
+
+    try {
+        await updateGuest(id, payload);
+        await loadGuests();
+        renderGuestsPage();
+    } catch (error) {
+        console.error("Erreur changement statut invité :", error);
+        alert(error.message);
+    }
 }
+
+async function deleteGuest(id) {
+    const confirmed = window.confirm("Supprimer cet invité ?");
+
+    if (!confirmed) {
+        return;
+    }
+
+    try {
+        await deleteGuestApi(id);
+        await loadGuests();
+        renderGuestsPage();
+    } catch (error) {
+        console.error("Erreur suppression invité :", error);
+        alert(error.message);
+    }
+}
+
+/* ==========================================================
+   MAPPING API ↔ FRONT
+   ========================================================== */
+
+function mapApiGuestToFrontGuest(apiGuest) {
+    return {
+        id: apiGuest.id,
+        name: apiGuest.nom || "",
+        email: apiGuest.email || "",
+        phone: apiGuest.telephone || "",
+        status: mapApiStatusToFront(apiGuest.statut),
+        foodRestrictions: apiGuest.regimeAlimentaire || "",
+        comment: apiGuest.notes || "",
+    };
+}
+
+function mapFrontStatusToApi(status) {
+    const statuses = {
+        PENDING: "en_attente",
+        CONFIRMED: "confirme",
+        REFUSED: "refuse",
+    };
+
+    return statuses[status] || "en_attente";
+}
+
+function mapApiStatusToFront(status) {
+    const statuses = {
+        en_attente: "PENDING",
+        confirme: "CONFIRMED",
+        refuse: "REFUSED",
+    };
+
+    return statuses[status] || "PENDING";
+}
+
+/* ==========================================================
+   HELPERS
+   ========================================================== */
 
 function findGuestById(id) {
     return guestsState.guests.find((guest) => guest.id === id);
-}
-
-function getNextGuestId() {
-    if (guestsState.guests.length === 0) {
-        return 1;
-    }
-
-    return Math.max(...guestsState.guests.map((guest) => guest.id)) + 1;
 }
 
 function getStatusLabel(status) {
@@ -375,16 +526,28 @@ function getStatusLabel(status) {
     return labels[status] || "En attente";
 }
 
-function getStatusCellClass(status) {
-    if (status === "CONFIRMED") {
-        return "guest-status-confirmed";
+function getStatusClass(status) {
+    const classes = {
+        PENDING: "pending",
+        CONFIRMED: "confirmed",
+        REFUSED: "refused",
+    };
+
+    return classes[status] || "pending";
+}
+
+function formatGuestNotes(guest) {
+    const parts = [];
+
+    if (guest.foodRestrictions) {
+        parts.push(`Régime : ${guest.foodRestrictions}`);
     }
 
-    if (status === "REFUSED") {
-        return "guest-status-refused";
+    if (guest.comment) {
+        parts.push(guest.comment);
     }
 
-    return "guest-status-pending";
+    return parts.length > 0 ? parts.join(" — ") : "Aucun commentaire";
 }
 
 function setText(selector, value) {
@@ -397,8 +560,28 @@ function setText(selector, value) {
     element.textContent = value;
 }
 
+function setInputValue(selector, value) {
+    const element = document.querySelector(selector);
+
+    if (!element) {
+        return;
+    }
+
+    element.value = value;
+}
+
+function getInputValue(selector) {
+    const element = document.querySelector(selector);
+
+    if (!element) {
+        return "";
+    }
+
+    return element.value;
+}
+
 function escapeHtml(value) {
-    return String(value)
+    return String(value ?? "")
         .replaceAll("&", "&amp;")
         .replaceAll("<", "&lt;")
         .replaceAll(">", "&gt;")

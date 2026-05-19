@@ -59,14 +59,23 @@
                 </button>
             </div>
 
+            <div class="guests-filter-row">
+                <select id="guestStatusFilter" class="guests-filter-select" aria-label="Filtrer par statut">
+                    <option value="ALL">Tous les statuts</option>
+                    <option value="PENDING">En attente</option>
+                    <option value="CONFIRMED">Confirmés</option>
+                    <option value="REFUSED">Refusés</option>
+                </select>
+            </div>
+
             <div class="guests-table-wrapper">
                 <table class="guests-table">
                     <thead>
                         <tr>
                             <th>Nom</th>
-                            <th>Contraintes alimentaires</th>
-                            <th>Statut actuel</th>
-                            <th colspan="2">Changer statut</th>
+                            <th>Email</th>
+                            <th>Téléphone</th>
+                            <th>Statut</th>
                             <th>Commentaires</th>
                             <th>Actions</th>
                         </tr>
@@ -80,22 +89,22 @@
 
             <section class="guests-stats" aria-label="Statistiques invités">
                 <article class="guests-stat-card">
-                    <strong id="totalGuestsCount">0</strong>
+                    <strong id="guestsTotalCount">0</strong>
                     <span>Invités prévus</span>
                 </article>
 
                 <article class="guests-stat-card">
-                    <strong id="pendingGuestsCount">0</strong>
+                    <strong id="guestsPendingCount">0</strong>
                     <span>En attente de réponse</span>
                 </article>
 
                 <article class="guests-stat-card">
-                    <strong id="refusedGuestsCount">0</strong>
-                    <span>Invitations refusés</span>
+                    <strong id="guestsRefusedCount">0</strong>
+                    <span>Invitations refusées</span>
                 </article>
 
                 <article class="guests-stat-card">
-                    <strong id="confirmedGuestsCount">0</strong>
+                    <strong id="guestsConfirmedCount">0</strong>
                     <span>Confirmés</span>
                 </article>
             </section>
@@ -109,6 +118,7 @@
             <section class="guest-modal-card">
                 <div class="guest-modal-header">
                     <h2 id="guestModalTitle">Ajouter un invité</h2>
+
                     <button type="button" class="guest-modal-close" id="closeGuestModalButton" aria-label="Fermer">
                         ×
                     </button>
@@ -119,12 +129,23 @@
 
                     <div class="guest-form-group">
                         <label for="guestName">Nom</label>
-                        <input id="guestName" type="text" required />
+                        <input id="guestName" type="text" required placeholder="Ex : Jean Dupont" />
                     </div>
 
                     <div class="guest-form-group">
-                        <label for="guestFood">Contraintes alimentaires</label>
-                        <input id="guestFood" type="text" placeholder="Ex : végétarien, allergie poissons..." />
+                        <label for="guestEmail">Email</label>
+                        <input id="guestEmail" type="email" placeholder="Ex : jean.dupont@email.fr" />
+                    </div>
+
+                    <div class="guest-form-group">
+                        <label for="guestPhone">Téléphone</label>
+                        <input id="guestPhone" type="tel" placeholder="Ex : 06 12 34 56 78" />
+                    </div>
+
+                    <div class="guest-form-group">
+                        <label for="guestFoodRestrictions">Contraintes alimentaires</label>
+                        <input id="guestFoodRestrictions" type="text"
+                            placeholder="Ex : végétarien, allergie poissons..." />
                     </div>
 
                     <div class="guest-form-group">
@@ -138,7 +159,8 @@
 
                     <div class="guest-form-group">
                         <label for="guestComment">Commentaires</label>
-                        <textarea id="guestComment" rows="3"></textarea>
+                        <textarea id="guestComment" rows="3"
+                            placeholder="Ex : côté famille mariée, témoin, information utile..."></textarea>
                     </div>
 
                     <div class="guest-form-actions">

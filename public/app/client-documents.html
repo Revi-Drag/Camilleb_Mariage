@@ -42,12 +42,8 @@
 
         <!-- PAGE DOCUMENTS -->
         <section class="documents-shell" aria-labelledby="documents-title">
-            <header class="documents-header">
+            <header class="documents-header documents-header-centered">
                 <h1 id="documents-title">Documents</h1>
-
-                <button type="button" class="documents-add-button" id="openDocumentModalButton">
-                    + Ajouter un document
-                </button>
             </header>
 
             <section class="documents-intro">
@@ -60,8 +56,18 @@
                 </div>
 
                 <article class="documents-summary-card">
-                    <strong id="documentsCount">0</strong>
+                    <strong id="documentsTotalCount">0</strong>
                     <span>Documents</span>
+                </article>
+
+                <article class="documents-summary-card">
+                    <strong id="documentsToReviewCount">0</strong>
+                    <span>À vérifier</span>
+                </article>
+
+                <article class="documents-summary-card">
+                    <strong id="documentsCommentedCount">0</strong>
+                    <span>Commentés</span>
                 </article>
             </section>
 
@@ -82,9 +88,8 @@
                             <th>Nom du fichier</th>
                             <th>Type</th>
                             <th>Taille</th>
-                            <th>Projet</th>
                             <th>Commentaire Camille</th>
-                            <th>Statut</th>
+                            <th>Voir</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -114,14 +119,17 @@
                 <form id="documentForm" class="document-form">
                     <div class="document-form-group">
                         <label for="documentProjectId">Projet mariage</label>
-                        <select id="documentProjectId" required>
-                            <option value="2">Mariage clients test</option>
+                        <select id="documentProjectId" required disabled>
+                            <option value="">Chargement du projet...</option>
                         </select>
                     </div>
 
                     <div class="document-form-group">
                         <label for="documentFile">Fichier</label>
                         <input id="documentFile" type="file" required />
+                        <p id="selectedDocumentName" class="document-selected-file">
+                            Aucun fichier sélectionné
+                        </p>
                     </div>
 
                     <p class="document-form-hint">

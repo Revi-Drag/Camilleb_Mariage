@@ -1,65 +1,45 @@
 document.addEventListener("DOMContentLoaded", () => {
-    initDocumentsPage();
+    initClientDocumentsPage();
 });
 
+const API_BASE_URL = "";
+
 const documentsState = {
+    currentProjectId: null,
+    currentProjectName: "",
     documents: [],
-    fallbackDocuments: [
-        {
-            id: 1,
-            nomOriginal: "devis-traiteur.pdf",
-            nomFichier: "devis-traiteur.pdf",
-            typeMime: "application/pdf",
-            taille: 1543555,
-            commentaireAdmin: "À comparer avec la formule cocktail.",
-            url: "#",
-            projetMariage: {
-                id: 2,
-                nom: "Mariage clients test",
-            },
-        },
-        {
-            id: 2,
-            nomOriginal: "inspiration-deco.jpg",
-            nomFichier: "inspiration-deco.jpg",
-            typeMime: "image/jpeg",
-            taille: 845000,
-            commentaireAdmin: null,
-            url: "#",
-            projetMariage: {
-                id: 2,
-                nom: "Mariage clients test",
-            },
-        },
-        {
-            id: 3,
-            nomOriginal: "contrat-salle.pdf",
-            nomFichier: "contrat-salle.pdf",
-            typeMime: "application/pdf",
-            taille: 2120000,
-            commentaireAdmin: "À vérifier : horaires de fin de soirée.",
-            url: "#",
-            projetMariage: {
-                id: 2,
-                nom: "Mariage clients test",
-            },
-        },
-    ],
 };
 
-function initDocumentsPage() {
+async function initClientDocumentsPage() {
     bindDocumentEvents();
-    loadDocuments();
+
+    try {
+        await loadCurrentProject();
+        updateProjectSelect();
+        await loadDocuments();
+        renderDocuments();
+    } catch (error) {
+        console.error("Erreur initialisation documents :", error);
+        alert("Impossible de charger les documents. Vérifie que tu es connecté.");
+    }
 }
 
 function bindDocumentEvents() {
+    const form = document.querySelector("#documentForm");
+    const fileInput = document.querySelector("#documentFile");
     const openButton = document.querySelector("#openDocumentModalButton");
     const closeButton = document.querySelector("#closeDocumentModalButton");
     const cancelButton = document.querySelector("#cancelDocumentButton");
     const backdrop = document.querySelector("#documentModalBackdrop");
-    const form = document.querySelector("#documentForm");
     const dropZone = document.querySelector("#documentsDropZone");
-    const fileInput = document.querySelector("#documentFile");
+
+    if (form) {
+        form.addEventListener("submit", handleDocumentSubmit);
+    }
+
+    if (fileInput) {
+        fileInput.addEventListener("change", updateSelectedFileName);
+    }
 
     if (openButton) {
         openButton.addEventListener("click", openDocumentModal);
@@ -77,120 +57,268 @@ function bindDocumentEvents() {
         backdrop.addEventListener("click", closeDocumentModal);
     }
 
-    if (form) {
-        form.addEventListener("submit", handleDocumentSubmit);
-    }
-
-    if (dropZone && fileInput) {
-        dropZone.addEventListener("click", () => {
-            openDocumentModal();
-        });
-
-        dropZone.addEventListener("dragover", (event) => {
-            event.preventDefault();
-            dropZone.classList.add("drag-over");
-        });
-
-        dropZone.addEventListener("dragleave", () => {
-            dropZone.classList.remove("drag-over");
-        });
-
-        dropZone.addEventListener("drop", (event) => {
-            event.preventDefault();
-            dropZone.classList.remove("drag-over");
-
-            const file = event.dataTransfer.files[0];
-
-            if (!file) {
-                return;
-            }
-
-            openDocumentModal();
-
-            setTimeout(() => {
-                fileInput.files = event.dataTransfer.files;
-            }, 0);
-        });
+    if (dropZone) {
+        dropZone.addEventListener("click", openDocumentModal);
     }
 }
 
-async function loadDocuments() {
-    try {
-        const response = await fetch("/api/client/documents", {
-            method: "GET",
-            credentials: "include",
-            headers: {
-                Accept: "application/json",
-            },
-        });
+/* ==========================================================
+   API
+   ========================================================== */
 
-        if (!response.ok) {
-            throw new Error("Chargement des documents impossible.");
-        }
+async function loadCurrentProject() {
+    const response = await fetch(`${API_BASE_URL}/api/client/projets`, {
+        method: "GET",
+        credentials: "include",
+        headers: {
+            Accept: "application/json",
+        },
+    });
 
-        const data = await response.json();
+    const data = await parseJsonResponse(response);
 
-        documentsState.documents = Array.isArray(data) ? data : [];
-        renderDocuments();
-    } catch (error) {
-        console.warn("Mode démo documents :", error);
-        documentsState.documents = documentsState.fallbackDocuments;
-        renderDocuments();
+    if (!response.ok) {
+        throw new Error(data.error || "Impossible de charger le projet client.");
     }
+
+    if (!Array.isArray(data) || data.length === 0) {
+        throw new Error("Aucun projet mariage associé à ce client.");
+    }
+
+    documentsState.currentProjectId = data[0].id;
+    documentsState.currentProjectName = data[0].nom || "Projet mariage";
+}
+
+async function loadDocuments() {
+    const response = await fetch(`${API_BASE_URL}/api/client/documents`, {
+        method: "GET",
+        credentials: "include",
+        headers: {
+            Accept: "application/json",
+        },
+    });
+
+    const data = await parseJsonResponse(response);
+
+    if (!response.ok) {
+        throw new Error(data.error || "Impossible de charger les documents.");
+    }
+
+    documentsState.documents = Array.isArray(data)
+        ? data.map(mapApiDocumentToFrontDocument)
+        : [];
+}
+
+async function uploadDocument(file) {
+    const formData = new FormData();
+
+    formData.append("projetMariageId", String(documentsState.currentProjectId));
+    formData.append("fichier", file);
+
+    const response = await fetch(`${API_BASE_URL}/api/client/documents`, {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+    });
+
+    const data = await parseJsonResponse(response);
+
+    if (!response.ok || data.success === false) {
+        throw new Error(data.error || "Impossible d’ajouter le document.");
+    }
+
+    return data.document;
+}
+
+async function deleteDocumentApi(id) {
+    const response = await fetch(`${API_BASE_URL}/api/client/documents/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+        headers: {
+            Accept: "application/json",
+        },
+    });
+
+    const data = await parseJsonResponse(response);
+
+    if (!response.ok || data.success === false) {
+        throw new Error(data.error || "Impossible de supprimer le document.");
+    }
+
+    return data;
+}
+
+async function parseJsonResponse(response) {
+    const text = await response.text();
+
+    if (!text) {
+        return {};
+    }
+
+    try {
+        return JSON.parse(text);
+    } catch (error) {
+        console.error("Réponse non JSON :", text);
+        throw new Error("Réponse serveur invalide.");
+    }
+}
+
+/* ==========================================================
+   RENDU
+   ========================================================== */
+
+function renderDocuments() {
+    const tableBody = document.querySelector("#documentsTableBody");
+
+    if (!tableBody) {
+        return;
+    }
+
+    tableBody.innerHTML = "";
+
+    if (documentsState.documents.length === 0) {
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+      <td colspan="6" class="documents-empty-cell">
+        Aucun document déposé pour le moment.
+      </td>
+    `;
+
+        tableBody.appendChild(tr);
+        updateDocumentsStats();
+        return;
+    }
+
+    documentsState.documents.forEach((documentItem) => {
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+      <td class="document-file-name-cell" title="${escapeAttribute(documentItem.name)}">
+        <strong class="document-name-cell">${escapeHtml(documentItem.name)}</strong>
+      </td>
+
+      <td>${escapeHtml(documentItem.typeLabel)}</td>
+
+      <td>${escapeHtml(documentItem.sizeLabel)}</td>
+
+      <td class="document-comment-cell">
+        ${documentItem.commentaireAdmin
+                ? escapeHtml(documentItem.commentaireAdmin)
+                : "Aucun commentaire"
+            }
+      </td>
+
+      <td>
+        <a href="${escapeAttribute(documentItem.url)}" target="_blank" rel="noopener" class="document-view-link">
+          Voir
+        </a>
+      </td>
+
+      <td>
+        <button type="button" class="document-delete-button" data-document-id="${documentItem.id}">
+          Supprimer
+        </button>
+      </td>
+    `;
+
+        tableBody.appendChild(tr);
+    });
+
+    bindDeleteButtons();
+    updateDocumentsStats();
+}
+
+function bindDeleteButtons() {
+    const buttons = document.querySelectorAll("[data-document-id]");
+
+    buttons.forEach((button) => {
+        button.addEventListener("click", async () => {
+            const id = Number(button.dataset.documentId);
+            await deleteDocument(id);
+        });
+    });
+}
+
+function updateDocumentsStats() {
+    const total = documentsState.documents.length;
+
+    const commentedCount = documentsState.documents.filter((documentItem) => {
+        return Boolean(documentItem.commentaireAdmin);
+    }).length;
+
+    setText("#documentsTotalCount", total);
+    setText("#documentsCommentedCount", commentedCount);
+    setText("#documentsToReviewCount", total - commentedCount);
+}
+
+function updateProjectSelect() {
+    const select = document.querySelector("#documentProjectId");
+
+    if (!select) {
+        return;
+    }
+
+    select.innerHTML = "";
+
+    const option = document.createElement("option");
+    option.value = String(documentsState.currentProjectId || "");
+    option.textContent = documentsState.currentProjectName || "Projet mariage";
+
+    select.appendChild(option);
+    select.value = String(documentsState.currentProjectId || "");
+}
+
+/* ==========================================================
+   ACTIONS
+   ========================================================== */
+
+function openDocumentModal() {
+    showElement("#documentModal");
+    clearDocumentMessage();
+}
+
+function closeDocumentModal() {
+    hideElement("#documentModal");
+    clearDocumentMessage();
 }
 
 async function handleDocumentSubmit(event) {
     event.preventDefault();
 
-    const message = document.querySelector("#documentMessage");
-    const projectSelect = document.querySelector("#documentProjectId");
     const fileInput = document.querySelector("#documentFile");
 
-    clearDocumentMessage(message);
-
-    const projetMariageId = projectSelect ? projectSelect.value : "";
-    const file = fileInput && fileInput.files ? fileInput.files[0] : null;
-
-    if (!projetMariageId || !file) {
-        showDocumentMessage(message, "Veuillez sélectionner un projet et un fichier.", "error");
+    if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+        showDocumentMessage("Sélectionne un fichier à envoyer.", "error");
         return;
     }
 
-    const formData = new FormData();
-    formData.append("projetMariageId", projetMariageId);
-    formData.append("fichier", file);
+    if (!documentsState.currentProjectId) {
+        showDocumentMessage("Aucun projet mariage trouvé pour envoyer le document.", "error");
+        return;
+    }
+
+    const file = fileInput.files[0];
 
     try {
-        const response = await fetch("/api/client/documents", {
-            method: "POST",
-            credentials: "include",
-            body: formData,
-        });
+        showDocumentMessage("Envoi du document en cours...", "success");
 
-        const data = await safeJson(response);
+        await uploadDocument(file);
 
-        if (!response.ok || data.success === false) {
-            showDocumentMessage(
-                message,
-                data.error || data.message || "Erreur lors de l’envoi du document.",
-                "error"
-            );
-            return;
-        }
+        fileInput.value = "";
+        updateSelectedFileName();
 
-        showDocumentMessage(message, "Document ajouté avec succès.", "success");
+        await loadDocuments();
+        renderDocuments();
 
-        if (fileInput) {
-            fileInput.value = "";
-        }
+        showDocumentMessage("Document envoyé avec succès.", "success");
 
-        setTimeout(() => {
+        window.setTimeout(() => {
             closeDocumentModal();
-            loadDocuments();
-        }, 500);
+        }, 700);
     } catch (error) {
         console.error("Erreur upload document :", error);
-        showDocumentMessage(message, "Erreur de connexion au serveur.", "error");
+        showDocumentMessage(error.message, "error");
     }
 }
 
@@ -202,131 +330,66 @@ async function deleteDocument(id) {
     }
 
     try {
-        const response = await fetch(`/api/client/documents/${id}`, {
-            method: "DELETE",
-            credentials: "include",
-            headers: {
-                Accept: "application/json",
-            },
-        });
-
-        const data = await safeJson(response);
-
-        if (!response.ok || data.success === false) {
-            alert(data.error || data.message || "Suppression impossible.");
-            return;
-        }
-
-        documentsState.documents = documentsState.documents.filter((document) => document.id !== id);
+        await deleteDocumentApi(id);
+        await loadDocuments();
         renderDocuments();
     } catch (error) {
         console.error("Erreur suppression document :", error);
-
-        documentsState.documents = documentsState.documents.filter((document) => document.id !== id);
-        renderDocuments();
+        alert(error.message);
     }
 }
 
-function renderDocuments() {
-    const tableBody = document.querySelector("#documentsTableBody");
-    const countElement = document.querySelector("#documentsCount");
+function updateSelectedFileName() {
+    const fileInput = document.querySelector("#documentFile");
+    const label = document.querySelector("#selectedDocumentName");
 
-    if (!tableBody) {
+    if (!label) {
         return;
     }
 
-    tableBody.innerHTML = "";
-
-    documentsState.documents.forEach((documentItem) => {
-        const tr = document.createElement("tr");
-
-        const status = getDocumentStatus(documentItem);
-
-        tr.innerHTML = `
-      <td>${escapeHtml(documentItem.nomOriginal || documentItem.nomFichier || "Document")}</td>
-      <td>${escapeHtml(formatMimeType(documentItem.typeMime))}</td>
-      <td>${escapeHtml(formatFileSize(documentItem.taille))}</td>
-      <td>${escapeHtml(documentItem.projetMariage?.nom || "-")}</td>
-      <td>${escapeHtml(documentItem.commentaireAdmin || "Aucun commentaire")}</td>
-      <td>
-        <span class="document-status-pill ${status.className}">
-          ${status.label}
-        </span>
-      </td>
-      <td>
-        <div class="document-row-actions">
-          <a href="${escapeAttribute(documentItem.url || "#")}" target="_blank" rel="noopener">Voir</a>
-          <a href="${escapeAttribute(documentItem.url || "#")}" download>Télécharger</a>
-          <button type="button" data-document-action="delete" data-id="${documentItem.id}">Supprimer</button>
-        </div>
-      </td>
-    `;
-
-        tableBody.appendChild(tr);
-    });
-
-    if (countElement) {
-        countElement.textContent = documentsState.documents.length;
+    if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+        label.textContent = "Aucun fichier sélectionné";
+        return;
     }
 
-    bindDocumentRowActions();
+    label.textContent = fileInput.files[0].name;
 }
 
-function bindDocumentRowActions() {
-    const deleteButtons = document.querySelectorAll("[data-document-action='delete']");
-
-    deleteButtons.forEach((button) => {
-        button.addEventListener("click", () => {
-            const id = Number(button.dataset.id);
-
-            if (id) {
-                deleteDocument(id);
-            }
-        });
-    });
-}
-
-function openDocumentModal() {
-    const modal = document.querySelector("#documentModal");
+function showDocumentMessage(text, type) {
     const message = document.querySelector("#documentMessage");
 
-    clearDocumentMessage(message);
-
-    if (modal) {
-        modal.classList.remove("hidden");
+    if (!message) {
+        return;
     }
+
+    message.textContent = text;
+    message.className = `document-message ${type}`;
 }
 
-function closeDocumentModal() {
-    const modal = document.querySelector("#documentModal");
-    const fileInput = document.querySelector("#documentFile");
-
-    if (fileInput) {
-        fileInput.value = "";
-    }
-
-    if (modal) {
-        modal.classList.add("hidden");
-    }
+function clearDocumentMessage() {
+    showDocumentMessage("", "");
 }
 
-function getDocumentStatus(documentItem) {
-    if (documentItem.commentaireAdmin) {
-        return {
-            label: "Commenté",
-            className: "commented",
-        };
-    }
+/* ==========================================================
+   MAPPING
+   ========================================================== */
 
+function mapApiDocumentToFrontDocument(apiDocument) {
     return {
-        label: "Déposé",
-        className: "uploaded",
+        id: apiDocument.id,
+        name: apiDocument.nomOriginal || apiDocument.nomFichier || "Document",
+        typeMime: apiDocument.typeMime || "",
+        typeLabel: getDocumentTypeLabel(apiDocument.typeMime),
+        size: Number(apiDocument.taille || 0),
+        sizeLabel: formatFileSize(apiDocument.taille),
+        commentaireAdmin: apiDocument.commentaireAdmin || "",
+        url: apiDocument.url || "#",
     };
 }
 
-function formatMimeType(typeMime) {
+function getDocumentTypeLabel(typeMime) {
     if (!typeMime) {
-        return "-";
+        return "Autre";
     }
 
     if (typeMime.includes("pdf")) {
@@ -337,11 +400,7 @@ function formatMimeType(typeMime) {
         return "Image";
     }
 
-    if (typeMime.includes("word") || typeMime.includes("document")) {
-        return "Document";
-    }
-
-    return typeMime;
+    return "Autre";
 }
 
 function formatFileSize(size) {
@@ -358,34 +417,42 @@ function formatFileSize(size) {
     return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`;
 }
 
-async function safeJson(response) {
-    try {
-        return await response.json();
-    } catch {
-        return {};
-    }
-}
+/* ==========================================================
+   HELPERS
+   ========================================================== */
 
-function showDocumentMessage(element, text, type) {
+function setText(selector, value) {
+    const element = document.querySelector(selector);
+
     if (!element) {
         return;
     }
 
-    element.textContent = text;
-    element.className = `document-message ${type}`;
+    element.textContent = value;
 }
 
-function clearDocumentMessage(element) {
+function showElement(selector) {
+    const element = document.querySelector(selector);
+
     if (!element) {
         return;
     }
 
-    element.textContent = "";
-    element.className = "document-message";
+    element.classList.remove("hidden");
+}
+
+function hideElement(selector) {
+    const element = document.querySelector(selector);
+
+    if (!element) {
+        return;
+    }
+
+    element.classList.add("hidden");
 }
 
 function escapeHtml(value) {
-    return String(value)
+    return String(value ?? "")
         .replaceAll("&", "&amp;")
         .replaceAll("<", "&lt;")
         .replaceAll(">", "&gt;")

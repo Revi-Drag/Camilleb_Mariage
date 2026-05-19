@@ -4460,3 +4460,112 @@ button {
 .guest-row-actions button {
     min-height: 22px;
 }
+
+/* ==========================================================
+   ESPACE CLIENT - DOCUMENTS - AJUSTEMENTS TABLE
+   ========================================================== */
+
+.documents-header-centered {
+    justify-content: center;
+    text-align: center;
+}
+
+.documents-table {
+    table-layout: fixed;
+    width: 100%;
+}
+
+.documents-table th:nth-child(1),
+.documents-table td:nth-child(1) {
+    width: 28%;
+}
+
+.documents-table th:nth-child(2),
+.documents-table td:nth-child(2) {
+    width: 11%;
+}
+
+.documents-table th:nth-child(3),
+.documents-table td:nth-child(3) {
+    width: 11%;
+}
+
+.documents-table th:nth-child(4),
+.documents-table td:nth-child(4) {
+    width: 22%;
+}
+
+.documents-table th:nth-child(5),
+.documents-table td:nth-child(5) {
+    width: 12%;
+}
+
+.documents-table th:nth-child(6),
+.documents-table td:nth-child(6) {
+    width: 16%;
+}
+
+.document-file-name-cell {
+    max-width: 0;
+}
+
+.document-name-cell {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.documents-upload-zone {
+    cursor: pointer;
+}
+
+/* ==========================================================
+   ESPACE CLIENT - DOCUMENTS - BOUTONS ACTIONS
+   ========================================================== */
+
+.documents-table td:nth-child(5),
+.documents-table td:nth-child(6) {
+    text-align: center;
+}
+
+.document-view-link,
+.document-delete-button {
+    min-width: 82px;
+    min-height: 28px;
+    border: 1px solid var(--green-dark);
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-family: "Anton", Impact, sans-serif;
+    font-size: 12px;
+    line-height: 1;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.document-view-link {
+    background: rgba(148, 166, 146, 0.72);
+    color: var(--green-dark);
+}
+
+.document-delete-button {
+    background: rgba(177, 105, 105, 0.26);
+    color: var(--green-dark);
+}
+
+.document-view-link:hover,
+.document-delete-button:hover {
+    filter: brightness(0.95);
+    text-decoration: none;
+}
+
+.document-view-link:focus,
+.document-delete-button:focus {
+    outline: 2px solid rgba(41, 60, 4, 0.28);
+    outline-offset: 2px;
+}

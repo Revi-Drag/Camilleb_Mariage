@@ -65,9 +65,9 @@
                     <span>À faire</span>
                 </article>
 
-                <article class="tasks-stat-card">
-                    <strong id="tasksInProgressCount">0</strong>
-                    <span>En cours</span>
+                <article class="tasks-stat-card tasks-stat-warning">
+                    <strong id="tasksRemainingCount">0</strong>
+                    <span>Restantes</span>
                 </article>
 
                 <article class="tasks-stat-card tasks-stat-success">
@@ -84,16 +84,8 @@
                 <select id="taskStatusFilter" class="tasks-filter-select" aria-label="Filtrer par statut">
                     <option value="ALL">Tous les statuts</option>
                     <option value="TODO">À faire</option>
-                    <option value="IN_PROGRESS">En cours</option>
                     <option value="DONE">Terminées</option>
-                </select>
-
-                <select id="taskPriorityFilter" class="tasks-filter-select" aria-label="Filtrer par priorité">
-                    <option value="ALL">Toutes priorités</option>
-                    <option value="NORMAL">Normal</option>
-                    <option value="IMPORTANT">Important</option>
-                    <option value="URGENT">Urgent</option>
-                </select>
+                </select>>
             </section>
 
             <!-- TABLEAU -->
@@ -103,7 +95,6 @@
                         <tr>
                             <th>Tâche</th>
                             <th>Échéance</th>
-                            <th>Priorité</th>
                             <th>Statut</th>
                             <th>Commentaire</th>
                             <th>Actions</th>
@@ -144,21 +135,12 @@
                             <input id="taskDueDate" type="date" />
                         </div>
 
-                        <div class="task-form-group">
-                            <label for="taskPriority">Priorité</label>
-                            <select id="taskPriority">
-                                <option value="NORMAL">Normal</option>
-                                <option value="IMPORTANT">Important</option>
-                                <option value="URGENT">Urgent</option>
-                            </select>
-                        </div>
                     </div>
 
                     <div class="task-form-group">
                         <label for="taskStatus">Statut</label>
                         <select id="taskStatus">
                             <option value="TODO">À faire</option>
-                            <option value="IN_PROGRESS">En cours</option>
                             <option value="DONE">Terminée</option>
                         </select>
                     </div>

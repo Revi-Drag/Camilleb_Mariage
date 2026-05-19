@@ -2,63 +2,32 @@ document.addEventListener("DOMContentLoaded", () => {
     initTasksPage();
 });
 
+const API_BASE_URL = "";
+
 const tasksState = {
     search: "",
     statusFilter: "ALL",
-    priorityFilter: "ALL",
-    tasks: [
-        {
-            id: 1,
-            title: "Valider le devis traiteur",
-            dueDate: "2026-05-18",
-            priority: "URGENT",
-            status: "TODO",
-            comment: "Comparer avec la formule cocktail.",
-        },
-        {
-            id: 2,
-            title: "Confirmer les horaires de la salle",
-            dueDate: "2026-05-24",
-            priority: "IMPORTANT",
-            status: "IN_PROGRESS",
-            comment: "Attente du retour du prestataire.",
-        },
-        {
-            id: 3,
-            title: "Finaliser le plan de table",
-            dueDate: "2026-06-02",
-            priority: "IMPORTANT",
-            status: "TODO",
-            comment: "",
-        },
-        {
-            id: 4,
-            title: "Envoyer les informations au photographe",
-            dueDate: "2026-06-08",
-            priority: "NORMAL",
-            status: "TODO",
-            comment: "",
-        },
-        {
-            id: 5,
-            title: "Choisir les inspirations décoration",
-            dueDate: "2026-05-30",
-            priority: "NORMAL",
-            status: "DONE",
-            comment: "Première sélection envoyée.",
-        },
-    ],
+    currentProjectId: null,
+    tasks: [],
 };
 
-function initTasksPage() {
+async function initTasksPage() {
     bindTasksEvents();
-    renderTasksPage();
+
+    try {
+        await loadCurrentProject();
+        await loadTasks();
+        renderTasksPage();
+    } catch (error) {
+        console.error("Erreur initialisation tâches :", error);
+        alert("Impossible de charger les tâches. Vérifie que tu es connecté.");
+    }
 }
 
 function bindTasksEvents() {
     const searchInput = document.querySelector("#taskSearchInput");
     const statusFilter = document.querySelector("#taskStatusFilter");
-    const priorityFilter = document.querySelector("#taskPriorityFilter");
+    // const priorityFilter = document.querySelector("#taskPriorityFilter");
 
     const openAddButton = document.querySelector("#openAddTaskButton");
     const closeButton = document.querySelector("#closeTaskModalButton");
@@ -80,12 +49,12 @@ function bindTasksEvents() {
         });
     }
 
-    if (priorityFilter) {
-        priorityFilter.addEventListener("change", () => {
-            tasksState.priorityFilter = priorityFilter.value;
-            renderTasksTable();
-        });
-    }
+    // if (priorityFilter) {
+    //     priorityFilter.addEventListener("change", () => {
+    //         tasksState.priorityFilter = priorityFilter.value;
+    //         renderTasksTable();
+    //     });
+    // }
 
     if (openAddButton) {
         openAddButton.addEventListener("click", () => {
@@ -110,6 +79,127 @@ function bindTasksEvents() {
     }
 }
 
+/* ==========================================================
+   API
+   ========================================================== */
+
+async function loadCurrentProject() {
+    const response = await fetch(`${API_BASE_URL}/api/client/projets`, {
+        method: "GET",
+        credentials: "include",
+        headers: {
+            Accept: "application/json",
+        },
+    });
+
+    const data = await parseJsonResponse(response);
+
+    if (!response.ok) {
+        throw new Error(data.error || "Impossible de charger le projet client.");
+    }
+
+    if (!Array.isArray(data) || data.length === 0) {
+        throw new Error("Aucun projet mariage associé à ce client.");
+    }
+
+    tasksState.currentProjectId = data[0].id;
+}
+
+async function loadTasks() {
+    const response = await fetch(`${API_BASE_URL}/api/client/taches`, {
+        method: "GET",
+        credentials: "include",
+        headers: {
+            Accept: "application/json",
+        },
+    });
+
+    const data = await parseJsonResponse(response);
+
+    if (!response.ok) {
+        throw new Error(data.error || "Impossible de charger les tâches.");
+    }
+
+    tasksState.tasks = Array.isArray(data) ? data.map(mapApiTaskToFrontTask) : [];
+}
+
+async function createTask(payload) {
+    const response = await fetch(`${API_BASE_URL}/api/client/taches`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+    });
+
+    const data = await parseJsonResponse(response);
+
+    if (!response.ok || data.success === false) {
+        throw new Error(data.error || "Impossible de créer la tâche.");
+    }
+
+    return data.tache;
+}
+
+async function updateTask(id, payload) {
+    const response = await fetch(`${API_BASE_URL}/api/client/taches/${id}`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+    });
+
+    const data = await parseJsonResponse(response);
+
+    if (!response.ok || data.success === false) {
+        throw new Error(data.error || "Impossible de modifier la tâche.");
+    }
+
+    return data.tache;
+}
+
+async function deleteTaskApi(id) {
+    const response = await fetch(`${API_BASE_URL}/api/client/taches/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+        headers: {
+            Accept: "application/json",
+        },
+    });
+
+    const data = await parseJsonResponse(response);
+
+    if (!response.ok || data.success === false) {
+        throw new Error(data.error || "Impossible de supprimer la tâche.");
+    }
+
+    return data;
+}
+
+async function parseJsonResponse(response) {
+    const text = await response.text();
+
+    if (!text) {
+        return {};
+    }
+
+    try {
+        return JSON.parse(text);
+    } catch (error) {
+        console.error("Réponse non JSON :", text);
+        throw new Error("Réponse serveur invalide.");
+    }
+}
+
+/* ==========================================================
+   RENDU
+   ========================================================== */
+
 function renderTasksPage() {
     renderTasksStats();
     renderTasksTable();
@@ -120,12 +210,12 @@ function renderTasksStats() {
 
     const total = tasks.length;
     const todo = tasks.filter((task) => task.status === "TODO").length;
-    const inProgress = tasks.filter((task) => task.status === "IN_PROGRESS").length;
     const done = tasks.filter((task) => task.status === "DONE").length;
+    const remaining = tasks.filter((task) => task.status !== "DONE").length;
 
     setText("#tasksTotalCount", total);
     setText("#tasksTodoCount", todo);
-    setText("#tasksInProgressCount", inProgress);
+    setText("#tasksRemainingCount", remaining);
     setText("#tasksDoneCount", done);
 }
 
@@ -140,6 +230,20 @@ function renderTasksTable() {
 
     tableBody.innerHTML = "";
 
+    if (tasks.length === 0) {
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+      <td colspan="5" class="tasks-empty-cell">
+        Aucune tâche à afficher.
+      </td>
+    `;
+
+        tableBody.appendChild(tr);
+        renderTasksStats();
+        return;
+    }
+
     tasks.forEach((task) => {
         const tr = document.createElement("tr");
 
@@ -149,12 +253,6 @@ function renderTasksTable() {
       </td>
 
       <td>${escapeHtml(formatDate(task.dueDate))}</td>
-
-      <td>
-        <span class="task-priority-pill ${getPriorityClass(task.priority)}">
-          ${getPriorityLabel(task.priority)}
-        </span>
-      </td>
 
       <td>
         <span class="task-status-pill ${getStatusClass(task.status)}">
@@ -186,8 +284,7 @@ function getFilteredTasks() {
     return tasksState.tasks.filter((task) => {
         return (
             matchesTaskSearch(task) &&
-            matchesTaskStatusFilter(task) &&
-            matchesTaskPriorityFilter(task)
+            matchesTaskStatusFilter(task)
         );
     });
 }
@@ -220,24 +317,21 @@ function matchesTaskStatusFilter(task) {
     return task.status === tasksState.statusFilter;
 }
 
-function matchesTaskPriorityFilter(task) {
-    if (tasksState.priorityFilter === "ALL") {
-        return true;
-    }
 
-    return task.priority === tasksState.priorityFilter;
-}
+/* ==========================================================
+   ACTIONS
+   ========================================================== */
 
 function bindTaskRowActions() {
     const buttons = document.querySelectorAll("[data-task-action][data-id]");
 
     buttons.forEach((button) => {
-        button.addEventListener("click", () => {
+        button.addEventListener("click", async () => {
             const id = Number(button.dataset.id);
             const action = button.dataset.taskAction;
 
             if (action === "done") {
-                markTaskAsDone(id);
+                await markTaskAsDone(id);
                 return;
             }
 
@@ -252,7 +346,7 @@ function bindTaskRowActions() {
             }
 
             if (action === "delete") {
-                deleteTask(id);
+                await deleteTask(id);
             }
         });
     });
@@ -268,8 +362,7 @@ function openTaskModal(task = null) {
 
     setInputValue("#taskId", task ? task.id : "");
     setInputValue("#taskTitle", task ? task.title : "");
-    setInputValue("#taskDueDate", task ? task.dueDate : "");
-    setInputValue("#taskPriority", task ? task.priority : "NORMAL");
+    setInputValue("#taskDueDate", task ? normalizeDateInputValue(task.dueDate) : "");
     setInputValue("#taskStatus", task ? task.status : "TODO");
     setInputValue("#taskComment", task ? task.comment : "");
 
@@ -290,13 +383,12 @@ function closeTaskModal() {
     modal.classList.add("hidden");
 }
 
-function handleTaskFormSubmit(event) {
+async function handleTaskFormSubmit(event) {
     event.preventDefault();
 
     const id = getInputValue("#taskId");
     const title = getInputValue("#taskTitle").trim();
     const dueDate = getInputValue("#taskDueDate");
-    const priority = getInputValue("#taskPriority");
     const status = getInputValue("#taskStatus");
     const comment = getInputValue("#taskComment").trim();
 
@@ -305,106 +397,121 @@ function handleTaskFormSubmit(event) {
         return;
     }
 
-    if (id) {
-        const task = findTaskById(Number(id));
-
-        if (task) {
-            task.title = title;
-            task.dueDate = dueDate;
-            task.priority = priority;
-            task.status = status;
-            task.comment = comment;
-        }
-    } else {
-        tasksState.tasks.push({
-            id: getNextTaskId(),
-            title,
-            dueDate,
-            priority,
-            status,
-            comment,
-        });
+    if (!tasksState.currentProjectId) {
+        alert("Aucun projet mariage trouvé pour créer la tâche.");
+        return;
     }
 
-    closeTaskModal();
-    renderTasksPage();
+    const payload = {
+        titre: title,
+        description: comment || null,
+        statut: mapFrontStatusToApi(status),
+        dateEcheance: dueDate || null,
+        projetMariageId: tasksState.currentProjectId,
+    };
 
-    /*
-      À brancher plus tard :
-      POST   /api/client/taches
-      PATCH  /api/client/taches/{id}
-    */
+    try {
+        if (id) {
+            await updateTask(Number(id), payload);
+        } else {
+            await createTask(payload);
+        }
+
+        closeTaskModal();
+        await loadTasks();
+        renderTasksPage();
+    } catch (error) {
+        console.error("Erreur enregistrement tâche :", error);
+        alert(error.message);
+    }
 }
 
-function markTaskAsDone(id) {
+async function markTaskAsDone(id) {
     const task = findTaskById(id);
 
     if (!task) {
         return;
     }
 
-    task.status = "DONE";
-    renderTasksPage();
+    const payload = {
+        titre: task.title,
+        description: task.comment || null,
+        statut: "terminee",
+        dateEcheance: normalizeDateInputValue(task.dueDate) || null,
+        projetMariageId: tasksState.currentProjectId,
+    };
 
-    /*
-      À brancher plus tard :
-      PATCH /api/client/taches/{id}
-      Body : { statut: "DONE" }
-    */
+    try {
+        await updateTask(id, payload);
+        await loadTasks();
+        renderTasksPage();
+    } catch (error) {
+        console.error("Erreur changement statut tâche :", error);
+        alert(error.message);
+    }
 }
 
-function deleteTask(id) {
+async function deleteTask(id) {
     const confirmed = window.confirm("Supprimer cette tâche ?");
 
     if (!confirmed) {
         return;
     }
 
-    tasksState.tasks = tasksState.tasks.filter((task) => task.id !== id);
-    renderTasksPage();
-
-    /*
-      À brancher plus tard :
-      DELETE /api/client/taches/{id}
-    */
+    try {
+        await deleteTaskApi(id);
+        await loadTasks();
+        renderTasksPage();
+    } catch (error) {
+        console.error("Erreur suppression tâche :", error);
+        alert(error.message);
+    }
 }
+
+/* ==========================================================
+   MAPPING API ↔ FRONT
+   ========================================================== */
+
+function mapApiTaskToFrontTask(apiTask) {
+    return {
+        id: apiTask.id,
+        title: apiTask.titre || "",
+        dueDate: apiTask.dateEcheance || "",
+        status: mapApiStatusToFront(apiTask.statut),
+        comment: apiTask.description || "",
+        commentaireAdmin: apiTask.commentaireAdmin || null,
+    };
+}
+
+function mapFrontStatusToApi(status) {
+    const statuses = {
+        TODO: "a_faire",
+        DONE: "terminee",
+    };
+
+    return statuses[status] || "a_faire";
+}
+
+function mapApiStatusToFront(status) {
+    const statuses = {
+        a_faire: "TODO",
+        terminee: "DONE",
+    };
+
+    return statuses[status] || "TODO";
+}
+
+/* ==========================================================
+   HELPERS
+   ========================================================== */
 
 function findTaskById(id) {
     return tasksState.tasks.find((task) => task.id === id);
 }
 
-function getNextTaskId() {
-    if (tasksState.tasks.length === 0) {
-        return 1;
-    }
-
-    return Math.max(...tasksState.tasks.map((task) => task.id)) + 1;
-}
-
-function getPriorityLabel(priority) {
-    const labels = {
-        NORMAL: "Normal",
-        IMPORTANT: "Important",
-        URGENT: "Urgent",
-    };
-
-    return labels[priority] || "Normal";
-}
-
-function getPriorityClass(priority) {
-    const classes = {
-        NORMAL: "normal",
-        IMPORTANT: "important",
-        URGENT: "urgent",
-    };
-
-    return classes[priority] || "normal";
-}
-
 function getStatusLabel(status) {
     const labels = {
         TODO: "À faire",
-        IN_PROGRESS: "En cours",
         DONE: "Terminée",
     };
 
@@ -414,7 +521,6 @@ function getStatusLabel(status) {
 function getStatusClass(status) {
     const classes = {
         TODO: "todo",
-        IN_PROGRESS: "in-progress",
         DONE: "done",
     };
 
@@ -426,7 +532,13 @@ function formatDate(dateString) {
         return "-";
     }
 
-    const date = new Date(dateString);
+    const normalized = normalizeDateInputValue(dateString);
+
+    if (!normalized) {
+        return "-";
+    }
+
+    const date = new Date(normalized);
 
     if (Number.isNaN(date.getTime())) {
         return dateString;
@@ -437,6 +549,14 @@ function formatDate(dateString) {
         month: "2-digit",
         year: "numeric",
     }).format(date);
+}
+
+function normalizeDateInputValue(dateString) {
+    if (!dateString) {
+        return "";
+    }
+
+    return String(dateString).slice(0, 10);
 }
 
 function setText(selector, value) {
@@ -470,7 +590,7 @@ function getInputValue(selector) {
 }
 
 function escapeHtml(value) {
-    return String(value)
+    return String(value ?? "")
         .replaceAll("&", "&amp;")
         .replaceAll("<", "&lt;")
         .replaceAll(">", "&gt;")

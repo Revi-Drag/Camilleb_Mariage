@@ -3892,39 +3892,7 @@ button {
 
 /* BADGES TÂCHES */
 
-.task-priority-pill,
-.task-status-pill {
-    display: inline-flex;
-    justify-content: center;
-    align-items: center;
-    min-width: 78px;
-    min-height: 26px;
-    padding: 5px 10px;
-    border-radius: 999px;
-    font-family: "Anton", Impact, sans-serif;
-    font-size: 12px;
-}
 
-.task-priority-pill.normal,
-.task-status-pill.done {
-    background: rgba(148, 166, 146, 0.72);
-    border: 1px solid rgba(41, 60, 4, 0.34);
-    color: var(--green-dark);
-}
-
-.task-priority-pill.important,
-.task-status-pill.in-progress {
-    background: rgba(199, 192, 174, 0.72);
-    border: 1px solid rgba(41, 60, 4, 0.28);
-    color: var(--green-dark);
-}
-
-.task-priority-pill.urgent,
-.task-status-pill.todo {
-    background: rgba(177, 105, 105, 0.36);
-    border: 1px solid rgba(41, 60, 4, 0.28);
-    color: var(--green-dark);
-}
 
 /* ACTIONS TÂCHES */
 
@@ -4395,4 +4363,12 @@ button {
     .admin-project-detail-stats {
         grid-template-columns: 1fr;
     }
+}
+
+.tasks-empty-cell {
+    height: 72px;
+    text-align: center !important;
+    font-weight: 700;
+    color: var(--green-dark);
+    background: rgba(250, 241, 230, 0.52);
 }

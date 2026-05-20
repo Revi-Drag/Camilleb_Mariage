@@ -1,144 +1,249 @@
 document.addEventListener("DOMContentLoaded", () => {
-    initBudgetPage();
+    initClientBudgetPage();
 });
 
+const API_BASE_URL = "";
+
 const budgetState = {
-    totalBudget: 14000,
-    rows: [
-        {
-            id: 1,
-            name: "Traiteur",
-            planned: 4140,
-            actual: 7000,
-            comment: "Voir à changer de traiteur ou de formule",
-        },
-        {
-            id: 2,
-            name: "Salle",
-            planned: 4000,
-            actual: 6500,
-            comment: "",
-        },
-        {
-            id: 3,
-            name: "DJ",
-            planned: 1000,
-            actual: 2000,
-            comment: "",
-        },
-        {
-            id: 4,
-            name: "Photographe",
-            planned: 1000,
-            actual: 2500,
-            comment: "",
-        },
-        {
-            id: 5,
-            name: "Alliances",
-            planned: 1200,
-            actual: 2000,
-            comment: "",
-        },
-        {
-            id: 6,
-            name: "Tenues",
-            planned: 2000,
-            actual: 2500,
-            comment: "",
-        },
-        {
-            id: 7,
-            name: "Maquillage",
-            planned: 200,
-            actual: 300,
-            comment: "",
-        },
-        {
-            id: 8,
-            name: "Coiffeur",
-            planned: 100,
-            actual: 250,
-            comment: "",
-        },
-        {
-            id: 9,
-            name: "Déco",
-            planned: 150,
-            actual: 400,
-            comment: "",
-        },
-    ],
+    currentProjectId: null,
+    currentProjectName: "",
+    budget: null,
+    expenses: [],
+    comment: "",
 };
 
-function initBudgetPage() {
+async function initClientBudgetPage() {
     bindBudgetEvents();
-    renderBudgetPage();
+
+    try {
+        await loadCurrentProject();
+        await loadBudget();
+        renderBudgetPage();
+    } catch (error) {
+        console.error("Erreur initialisation budget :", error);
+        alert("Impossible de charger le budget. Vérifie que tu es connecté.");
+    }
 }
 
 function bindBudgetEvents() {
-    const openAddButton = document.querySelector("#openAddExpenseButton");
-    const closeButton = document.querySelector("#closeBudgetModalButton");
-    const cancelButton = document.querySelector("#cancelBudgetButton");
-    const backdrop = document.querySelector("#budgetModalBackdrop");
-    const form = document.querySelector("#budgetForm");
+    const plannedInput = document.querySelector("#budgetPlannedInput");
+    const commentInput = document.querySelector("#budgetCommentInput");
+    const addButton = document.querySelector("#addBudgetExpenseButton");
+    const submitButton = document.querySelector("#budgetSubmitButton");
 
-    const plannedInput = document.querySelector("#expensePlanned");
-    const actualInput = document.querySelector("#expenseActual");
-
-    if (openAddButton) {
-        openAddButton.addEventListener("click", () => {
-            openBudgetModal();
+    if (plannedInput) {
+        plannedInput.addEventListener("input", () => {
+            renderBudgetSummary();
+            renderExpensesTable();
         });
     }
 
-    if (closeButton) {
-        closeButton.addEventListener("click", closeBudgetModal);
+    if (commentInput) {
+        commentInput.addEventListener("input", () => {
+            budgetState.comment = commentInput.value.trim();
+        });
     }
 
-    if (cancelButton) {
-        cancelButton.addEventListener("click", closeBudgetModal);
+    if (addButton) {
+        addButton.addEventListener("click", addExpenseRow);
     }
 
-    if (backdrop) {
-        backdrop.addEventListener("click", closeBudgetModal);
-    }
-
-    if (form) {
-        form.addEventListener("submit", handleBudgetFormSubmit);
-    }
-
-    if (plannedInput) {
-        plannedInput.addEventListener("input", updateExpensePreview);
-    }
-
-    if (actualInput) {
-        actualInput.addEventListener("input", updateExpensePreview);
+    if (submitButton) {
+        submitButton.addEventListener("click", handleBudgetSubmit);
     }
 }
 
+/* ==========================================================
+   API
+   ========================================================== */
+
+async function loadCurrentProject() {
+    const response = await fetch(`${API_BASE_URL}/api/client/projets`, {
+        method: "GET",
+        credentials: "include",
+        headers: {
+            Accept: "application/json",
+        },
+    });
+
+    const data = await parseJsonResponse(response);
+
+    if (!response.ok) {
+        throw new Error(data.error || "Impossible de charger le projet client.");
+    }
+
+    if (!Array.isArray(data) || data.length === 0) {
+        throw new Error("Aucun projet mariage associé à ce client.");
+    }
+
+    budgetState.currentProjectId = data[0].id;
+    budgetState.currentProjectName = data[0].nom || "Projet mariage";
+}
+
+async function loadBudget() {
+    const response = await fetch(`${API_BASE_URL}/api/client/budget`, {
+        method: "GET",
+        credentials: "include",
+        headers: {
+            Accept: "application/json",
+        },
+    });
+
+    const data = await parseJsonResponse(response);
+
+    if (!response.ok) {
+        throw new Error(data.error || "Impossible de charger le budget.");
+    }
+
+    budgetState.budget = Array.isArray(data) && data.length > 0
+        ? mapApiBudgetToFrontBudget(data[0])
+        : null;
+
+    hydrateBudgetStateFromBudget();
+}
+
+async function createBudget(payload) {
+    const response = await fetch(`${API_BASE_URL}/api/client/budget`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+    });
+
+    const data = await parseJsonResponse(response);
+
+    if (!response.ok || data.success === false) {
+        throw new Error(data.error || "Impossible de créer le budget.");
+    }
+
+    return data.budget;
+}
+
+async function updateBudget(id, payload) {
+    const response = await fetch(`${API_BASE_URL}/api/client/budget/${id}`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+    });
+
+    const data = await parseJsonResponse(response);
+
+    if (!response.ok || data.success === false) {
+        throw new Error(data.error || "Impossible de modifier le budget.");
+    }
+
+    return data.budget;
+}
+
+async function parseJsonResponse(response) {
+    const text = await response.text();
+
+    if (!text) {
+        return {};
+    }
+
+    try {
+        return JSON.parse(text);
+    } catch (error) {
+        console.error("Réponse non JSON :", text);
+        throw new Error("Réponse serveur invalide.");
+    }
+}
+
+/* ==========================================================
+   INITIALISATION DONNÉES
+   ========================================================== */
+
+function hydrateBudgetStateFromBudget() {
+    const budget = budgetState.budget;
+
+    if (!budget) {
+        budgetState.expenses = [];
+        budgetState.comment = "";
+        return;
+    }
+
+    const parsedNotes = parseBudgetNotes(budget.notes);
+
+    budgetState.expenses = parsedNotes.expenses;
+    budgetState.comment = parsedNotes.comment;
+}
+
+function parseBudgetNotes(notes) {
+    if (!notes) {
+        return {
+            comment: "",
+            expenses: [],
+        };
+    }
+
+    try {
+        const parsed = JSON.parse(notes);
+
+        if (parsed && Array.isArray(parsed.expenses)) {
+            return {
+                comment: parsed.comment || "",
+                expenses: parsed.expenses.map(normalizeExpense),
+            };
+        }
+    } catch (error) {
+        return {
+            comment: notes,
+            expenses: [],
+        };
+    }
+
+    return {
+        comment: "",
+        expenses: [],
+    };
+}
+
+function normalizeExpense(expense) {
+    return {
+        id: expense.id || createLocalId(),
+        name: expense.name || "",
+        amount: Number(expense.amount || 0),
+    };
+}
+
+/* ==========================================================
+   RENDU
+   ========================================================== */
+
 function renderBudgetPage() {
+    renderBudgetForm();
     renderBudgetSummary();
-    renderBudgetRows();
+    renderExpensesTable();
+}
+
+function renderBudgetForm() {
+    const budget = budgetState.budget;
+
+    setText("#budgetProjectName", budgetState.currentProjectName || "-");
+    setInputValue("#budgetPlannedInput", budget ? budget.montantPrevu : "");
+    setInputValue("#budgetCommentInput", budgetState.comment || "");
 }
 
 function renderBudgetSummary() {
-    const totalBudget = budgetState.totalBudget;
-    const usedBudget = getUsedBudgetTotal();
-    const remaining = totalBudget - usedBudget;
+    const planned = getCurrentPlannedAmount();
+    const spent = getExpensesTotal();
+    const remaining = planned - spent;
 
-    setText("#budgetTotal", formatCurrency(totalBudget));
-    setText("#budgetRemaining", formatCurrency(remaining));
-
-    const remainingElement = document.querySelector("#budgetRemaining");
-
-    if (remainingElement) {
-        remainingElement.classList.toggle("negative-budget", remaining < 0);
-    }
+    setText("#budgetTotalAmount", formatCurrency(planned));
+    setText("#budgetSpentAmount", formatCurrency(spent));
+    setText("#budgetRemainingAmount", formatCurrency(remaining));
 }
 
-function renderBudgetRows() {
-    const tableBody = document.querySelector("#budgetTableBody");
+function renderExpensesTable() {
+    const tableBody = document.querySelector("#budgetExpensesTableBody");
 
     if (!tableBody) {
         return;
@@ -146,262 +251,262 @@ function renderBudgetRows() {
 
     tableBody.innerHTML = "";
 
-    budgetState.rows.forEach((row) => {
-        const difference = calculateDifference(row);
-        const percentage = calculateBudgetPercentage(row);
-
+    if (budgetState.expenses.length === 0) {
         const tr = document.createElement("tr");
 
         tr.innerHTML = `
-      <td>${escapeHtml(row.name)}</td>
-      <td>${formatCurrency(row.planned)}</td>
-      <td>${row.actual === null || row.actual === "" ? "-" : formatCurrency(row.actual)}</td>
-      <td class="${difference > 0 ? "budget-over" : difference < 0 ? "budget-under" : ""}">
-        ${formatCurrency(difference)}
+      <td colspan="4" class="budget-empty-cell">
+        Aucune dépense ajoutée pour le moment.
       </td>
-      <td>${percentage} %</td>
-      <td>${escapeHtml(row.comment || "")}</td>
+    `;
+
+        tableBody.appendChild(tr);
+        return;
+    }
+
+    budgetState.expenses.forEach((expense) => {
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
       <td>
-        <div class="budget-row-actions">
-          <button type="button" data-budget-action="edit" data-id="${row.id}">Modifier</button>
-          <button type="button" data-budget-action="delete" data-id="${row.id}">Supprimer</button>
-        </div>
+        <input
+          class="budget-expense-input"
+          type="text"
+          value="${escapeAttribute(expense.name)}"
+          placeholder="Ex : Traiteur"
+          data-expense-field="name"
+          data-expense-id="${expense.id}"
+        />
+      </td>
+
+      <td>
+        <input
+          class="budget-expense-input"
+          type="number"
+          min="0"
+          step="1"
+          value="${escapeAttribute(expense.amount)}"
+          placeholder="Ex : 7000"
+          data-expense-field="amount"
+          data-expense-id="${expense.id}"
+        />
+      </td>
+
+      <td>
+        <strong data-expense-percent="${expense.id}">
+        ${escapeHtml(formatExpensePercent(expense.amount))}
+        </strong>
+      </td>
+
+      <td>
+        <button
+          type="button"
+          class="budget-delete-button"
+          data-expense-delete="${expense.id}"
+        >
+          Supprimer
+        </button>
       </td>
     `;
 
         tableBody.appendChild(tr);
     });
 
-    bindBudgetRowActions();
+    bindExpenseInputs();
+    bindDeleteExpenseButtons();
 }
 
-function bindBudgetRowActions() {
-    const buttons = document.querySelectorAll("[data-budget-action][data-id]");
+function bindExpenseInputs() {
+    const inputs = document.querySelectorAll("[data-expense-field][data-expense-id]");
 
-    buttons.forEach((button) => {
-        button.addEventListener("click", () => {
-            const id = Number(button.dataset.id);
-            const action = button.dataset.budgetAction;
+    inputs.forEach((input) => {
+        input.addEventListener("input", () => {
+            const id = input.dataset.expenseId;
+            const field = input.dataset.expenseField;
+            const expense = findExpenseById(id);
 
-            if (action === "edit") {
-                const row = findBudgetRowById(id);
-
-                if (row) {
-                    openBudgetModal(row);
-                }
-
+            if (!expense) {
                 return;
             }
 
-            if (action === "delete") {
-                deleteBudgetRow(id);
+            if (field === "name") {
+                expense.name = input.value;
             }
+
+            if (field === "amount") {
+                expense.amount = Number(input.value || 0);
+
+                const percentCell = document.querySelector(`[data-expense-percent="${id}"]`);
+
+                if (percentCell) {
+                    percentCell.textContent = formatExpensePercent(expense.amount);
+                }
+            }
+
+            renderBudgetSummary();
         });
     });
 }
 
-function openBudgetModal(row = null) {
-    const modal = document.querySelector("#budgetModal");
-    const title = document.querySelector("#budgetModalTitle");
+function bindDeleteExpenseButtons() {
+    const buttons = document.querySelectorAll("[data-expense-delete]");
 
-    if (!modal) {
-        return;
-    }
+    buttons.forEach((button) => {
+        button.addEventListener("click", () => {
+            const id = button.dataset.expenseDelete;
+            budgetState.expenses = budgetState.expenses.filter((expense) => {
+                return String(expense.id) !== String(id);
+            });
 
-    setInputValue("#expenseId", row ? row.id : "");
-    setInputValue("#expenseName", row ? row.name : "");
-    setInputValue("#expensePlanned", row ? row.planned : "");
-    setInputValue("#expenseActual", row && row.actual !== null ? row.actual : "");
-    setInputValue("#expenseComment", row ? row.comment : "");
-
-    if (title) {
-        title.textContent = row ? "Modifier une dépense" : "Ajouter une dépense";
-    }
-
-    updateExpensePreview();
-    modal.classList.remove("hidden");
-}
-
-function closeBudgetModal() {
-    const modal = document.querySelector("#budgetModal");
-
-    if (!modal) {
-        return;
-    }
-
-    modal.classList.add("hidden");
-}
-
-function handleBudgetFormSubmit(event) {
-    event.preventDefault();
-
-    const id = getInputValue("#expenseId");
-    const name = getInputValue("#expenseName").trim();
-    const planned = parseAmount(getInputValue("#expensePlanned"));
-    const actualRaw = getInputValue("#expenseActual");
-    const actual = actualRaw === "" ? null : parseAmount(actualRaw);
-    const comment = getInputValue("#expenseComment").trim();
-
-    if (!name) {
-        alert("Le nom de la dépense est obligatoire.");
-        return;
-    }
-
-    if (planned === null || planned < 0) {
-        alert("Le montant prévu est obligatoire et doit être positif.");
-        return;
-    }
-
-    if (actual !== null && actual < 0) {
-        alert("Le montant réel doit être positif.");
-        return;
-    }
-
-    if (id) {
-        const row = findBudgetRowById(Number(id));
-
-        if (row) {
-            row.name = name;
-            row.planned = planned;
-            row.actual = actual;
-            row.comment = comment;
-        }
-    } else {
-        budgetState.rows.push({
-            id: getNextBudgetRowId(),
-            name,
-            planned,
-            actual,
-            comment,
+            renderBudgetSummary();
+            renderExpensesTable();
         });
-    }
-
-    closeBudgetModal();
-    renderBudgetPage();
-
-    /*
-      À brancher plus tard :
-      POST   /api/client/budgets
-      PATCH  /api/client/budgets/{id}
-    */
+    });
 }
 
-function deleteBudgetRow(id) {
-    const confirmed = window.confirm("Supprimer cette dépense ?");
+/* ==========================================================
+   ACTIONS
+   ========================================================== */
 
-    if (!confirmed) {
+function addExpenseRow() {
+    budgetState.expenses.push({
+        id: createLocalId(),
+        name: "",
+        amount: 0,
+    });
+
+    renderExpensesTable();
+}
+
+async function handleBudgetSubmit() {
+    const planned = getCurrentPlannedAmount();
+    const spent = getExpensesTotal();
+    const notesPayload = buildBudgetNotesPayload();
+
+    if (planned < 0) {
+        showBudgetMessage("Le budget prévu doit être positif.", "error");
         return;
     }
 
-    budgetState.rows = budgetState.rows.filter((row) => row.id !== id);
-    renderBudgetPage();
+    if (!budgetState.currentProjectId) {
+        showBudgetMessage("Aucun projet mariage associé.", "error");
+        return;
+    }
 
-    /*
-      À brancher plus tard :
-      DELETE /api/client/budgets/{id}
-    */
-}
-
-function updateExpensePreview() {
-    const planned = parseAmount(getInputValue("#expensePlanned"));
-    const actualRaw = getInputValue("#expenseActual");
-    const actual = actualRaw === "" ? null : parseAmount(actualRaw);
-
-    const previewRow = {
-        planned: planned || 0,
-        actual,
+    const payload = {
+        montantPrevu: planned,
+        montantDepense: spent,
+        notes: JSON.stringify(notesPayload),
+        projetMariageId: budgetState.currentProjectId,
     };
 
-    const difference = calculateDifference(previewRow);
-    const percentage = calculateBudgetPercentage(previewRow);
+    try {
+        if (budgetState.budget) {
+            await updateBudget(budgetState.budget.id, payload);
+            showBudgetMessage("Budget enregistré avec succès.", "success");
+        } else {
+            await createBudget(payload);
+            showBudgetMessage("Budget créé avec succès.", "success");
+        }
 
-    setText("#expenseDifferencePreview", formatCurrency(difference));
-    setText("#expensePercentagePreview", `${percentage} %`);
-}
-
-/**
- * Différence :
- * réel - prévu.
- *
- * Si le réel est vide, on considère la différence comme 0
- * parce que la dépense n'est pas encore réalisée.
- */
-function calculateDifference(row) {
-    if (row.actual === null || row.actual === "") {
-        return 0;
+        await loadBudget();
+        renderBudgetPage();
+    } catch (error) {
+        console.error("Erreur sauvegarde budget :", error);
+        showBudgetMessage(error.message, "error");
     }
-
-    return Number(row.actual || 0) - Number(row.planned || 0);
 }
 
-/**
- * Pourcentage :
- * - si réel rempli : réel / budget total * 100
- * - si réel vide : prévu / budget total * 100
- */
-function calculateBudgetPercentage(row) {
-    if (!budgetState.totalBudget || budgetState.totalBudget <= 0) {
-        return 0;
-    }
+function buildBudgetNotesPayload() {
+    const commentInput = document.querySelector("#budgetCommentInput");
 
-    const amountForPercentage =
-        row.actual === null || row.actual === ""
-            ? Number(row.planned || 0)
-            : Number(row.actual || 0);
-
-    return Math.round((amountForPercentage / budgetState.totalBudget) * 100);
+    return {
+        comment: commentInput ? commentInput.value.trim() : budgetState.comment,
+        expenses: budgetState.expenses
+            .filter((expense) => expense.name.trim() !== "" || Number(expense.amount) > 0)
+            .map((expense) => ({
+                id: expense.id,
+                name: expense.name.trim(),
+                amount: Number(expense.amount || 0),
+            })),
+    };
 }
 
-/**
- * Total utilisé :
- * - si réel rempli : réel
- * - si réel vide : prévu
- */
-function getUsedBudgetTotal() {
-    return budgetState.rows.reduce((total, row) => {
-        const amount =
-            row.actual === null || row.actual === ""
-                ? Number(row.planned || 0)
-                : Number(row.actual || 0);
+/* ==========================================================
+   MAPPING
+   ========================================================== */
 
-        return total + amount;
+function mapApiBudgetToFrontBudget(apiBudget) {
+    return {
+        id: apiBudget.id,
+        montantPrevu: Number(apiBudget.montantPrevu || 0),
+        montantDepense: Number(apiBudget.montantDepense || 0),
+        ecart: Number(apiBudget.ecart || 0),
+        notes: apiBudget.notes || "",
+        commentaireAdmin: apiBudget.commentaireAdmin || "",
+        projectId: apiBudget.projetMariage?.id || null,
+        projectName: apiBudget.projetMariage?.nom || "",
+    };
+}
+
+/* ==========================================================
+   HELPERS
+   ========================================================== */
+
+function getCurrentPlannedAmount() {
+    return Number(getInputValue("#budgetPlannedInput") || 0);
+}
+
+function getExpensesTotal() {
+    return budgetState.expenses.reduce((total, expense) => {
+        return total + Number(expense.amount || 0);
     }, 0);
 }
 
-function findBudgetRowById(id) {
-    return budgetState.rows.find((row) => row.id === id);
+function formatExpensePercent(amount) {
+    const planned = getCurrentPlannedAmount();
+
+    if (!planned) {
+        return "0 %";
+    }
+
+    const percent = (Number(amount || 0) / planned) * 100;
+
+    return `${Math.round(percent)} %`;
 }
 
-function getNextBudgetRowId() {
-    if (budgetState.rows.length === 0) {
-        return 1;
-    }
-
-    return Math.max(...budgetState.rows.map((row) => row.id)) + 1;
+function findExpenseById(id) {
+    return budgetState.expenses.find((expense) => {
+        return String(expense.id) === String(id);
+    });
 }
 
-function parseAmount(value) {
-    if (value === null || value === undefined || value === "") {
-        return null;
-    }
-
-    const parsed = Number(value);
-
-    if (Number.isNaN(parsed)) {
-        return null;
-    }
-
-    return parsed;
+function createLocalId() {
+    return `local_${Date.now()}_${Math.random().toString(16).slice(2)}`;
 }
 
 function formatCurrency(value) {
-    const number = Number(value || 0);
-
     return new Intl.NumberFormat("fr-FR", {
         style: "currency",
         currency: "EUR",
         maximumFractionDigits: 0,
-    }).format(number);
+    }).format(Number(value || 0));
+}
+
+function showBudgetMessage(text, type) {
+    const message = document.querySelector("#budgetMessage");
+
+    if (!message) {
+        return;
+    }
+
+    message.textContent = text;
+    message.className = `budget-message ${type}`;
+
+    window.setTimeout(() => {
+        message.textContent = "";
+        message.className = "budget-message";
+    }, 3500);
 }
 
 function setText(selector, value) {
@@ -435,10 +540,14 @@ function getInputValue(selector) {
 }
 
 function escapeHtml(value) {
-    return String(value)
+    return String(value ?? "")
         .replaceAll("&", "&amp;")
         .replaceAll("<", "&lt;")
         .replaceAll(">", "&gt;")
         .replaceAll('"', "&quot;")
         .replaceAll("'", "&#039;");
+}
+
+function escapeAttribute(value) {
+    return escapeHtml(value);
 }

@@ -4569,3 +4569,293 @@ button {
     outline: 2px solid rgba(41, 60, 4, 0.28);
     outline-offset: 2px;
 }
+
+.budget-item-name {
+    font-family: "Anton", Impact, sans-serif;
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--green-dark);
+}
+
+.budget-form-section {
+    margin: 28px 0;
+    padding: 24px;
+    border: 1px solid rgba(41, 60, 4, 0.24);
+    border-radius: 20px;
+    background: rgba(250, 241, 230, 0.52);
+    color: var(--green-dark);
+}
+
+.budget-form-intro {
+    margin-bottom: 20px;
+}
+
+.budget-form-intro h2 {
+    margin: 0 0 8px;
+    font-family: "Anton", Impact, sans-serif;
+    font-size: 24px;
+    font-weight: 400;
+    color: var(--green-dark);
+}
+
+.budget-form-intro p {
+    margin: 0;
+    font-size: 14px;
+}
+
+.budget-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+}
+
+.budget-inline-form .budget-form-group {
+    margin-bottom: 16px;
+}
+
+.budget-inline-form label {
+    display: block;
+    margin-bottom: 6px;
+    font-family: "Anton", Impact, sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--green-dark);
+}
+
+.budget-inline-form input,
+.budget-inline-form textarea {
+    width: 100%;
+    border: 1px solid var(--green-dark);
+    border-radius: 6px;
+    background: var(--white);
+    color: var(--green-dark);
+    padding: 9px 10px;
+    font-family: "Montserrat", Arial, sans-serif;
+    font-size: 13px;
+}
+
+.budget-inline-form textarea {
+    resize: vertical;
+}
+
+.budget-message {
+    min-height: 18px;
+    margin: 8px 0 16px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.budget-message.success {
+    color: var(--green-dark);
+}
+
+.budget-message.error {
+    color: #9b2d2d;
+}
+
+.budget-empty-cell {
+    height: 72px;
+    text-align: center !important;
+    font-weight: 700;
+    color: var(--green-dark);
+    background: rgba(250, 241, 230, 0.52);
+}
+
+.budget-positive {
+    color: var(--green-dark);
+    font-weight: 700;
+}
+
+.budget-negative {
+    color: #9b2d2d;
+    font-weight: 700;
+}
+
+.budget-notes-cell {
+    text-align: left !important;
+    line-height: 1.35;
+}
+
+@media (max-width: 760px) {
+    .budget-form-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ==========================================================
+   ESPACE CLIENT - BUDGET - LISTE DÉPENSES
+   ========================================================== */
+
+.budget-form-section,
+.budget-expenses-section {
+    margin: 28px 0;
+    padding: 24px;
+    border: 1px solid rgba(41, 60, 4, 0.24);
+    border-radius: 20px;
+    background: rgba(250, 241, 230, 0.52);
+    color: var(--green-dark);
+}
+
+.budget-form-intro,
+.budget-expenses-header {
+    margin-bottom: 20px;
+}
+
+.budget-expenses-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 24px;
+}
+
+.budget-form-intro h2,
+.budget-expenses-header h2 {
+    margin: 0 0 8px;
+    font-family: "Anton", Impact, sans-serif;
+    font-size: 24px;
+    font-weight: 400;
+    color: var(--green-dark);
+}
+
+.budget-form-intro p,
+.budget-expenses-header p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.45;
+}
+
+.budget-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+}
+
+.budget-inline-form .budget-form-group {
+    margin-bottom: 16px;
+}
+
+.budget-inline-form label {
+    display: block;
+    margin-bottom: 6px;
+    font-family: "Anton", Impact, sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--green-dark);
+}
+
+.budget-inline-form input,
+.budget-inline-form textarea,
+.budget-expense-input {
+    width: 100%;
+    border: 1px solid var(--green-dark);
+    border-radius: 6px;
+    background: var(--white);
+    color: var(--green-dark);
+    padding: 9px 10px;
+    font-family: "Montserrat", Arial, sans-serif;
+    font-size: 13px;
+}
+
+.budget-message {
+    min-height: 18px;
+    margin: 8px 0 0;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.budget-message.success {
+    color: var(--green-dark);
+}
+
+.budget-message.error {
+    color: #9b2d2d;
+}
+
+.budget-empty-cell {
+    height: 72px;
+    text-align: center !important;
+    font-weight: 700;
+    color: var(--green-dark);
+    background: rgba(250, 241, 230, 0.52);
+}
+
+.budget-table {
+    table-layout: fixed;
+}
+
+.budget-table th,
+.budget-table td {
+    vertical-align: middle;
+}
+
+.budget-table th:nth-child(1),
+.budget-table td:nth-child(1) {
+    width: 38%;
+}
+
+.budget-table th:nth-child(2),
+.budget-table td:nth-child(2) {
+    width: 22%;
+}
+
+.budget-table th:nth-child(3),
+.budget-table td:nth-child(3) {
+    width: 20%;
+}
+
+.budget-table th:nth-child(4),
+.budget-table td:nth-child(4) {
+    width: 20%;
+}
+
+.budget-save-zone {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 18px;
+}
+
+.budget-add-button,
+.budget-save-button,
+.budget-delete-button {
+    border: 1px solid var(--green-dark);
+    border-radius: 999px;
+    padding: 8px 14px;
+    font-family: "Anton", Impact, sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.budget-add-button,
+.budget-save-button {
+    background: var(--green-dark);
+    color: var(--white);
+}
+
+.budget-delete-button {
+    background: rgba(177, 105, 105, 0.26);
+    color: var(--green-dark);
+}
+
+.budget-add-button:hover,
+.budget-save-button:hover,
+.budget-delete-button:hover {
+    filter: brightness(0.95);
+}
+
+@media (max-width: 760px) {
+
+    .budget-form-grid,
+    .budget-expenses-header {
+        grid-template-columns: 1fr;
+    }
+
+    .budget-expenses-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .budget-add-button,
+    .budget-save-button {
+        width: 100%;
+    }
+}

@@ -16,7 +16,6 @@
 
 <body>
     <main class="client-page">
-        <!-- HEADER CLIENT -->
         <header class="client-header">
             <nav class="client-nav" aria-label="Navigation espace client">
                 <div class="client-nav-left">
@@ -35,12 +34,10 @@
             </nav>
         </header>
 
-        <!-- IDENTITÉ -->
         <section class="client-identity budget-identity" aria-label="Espace client">
             <div class="client-logo" aria-hidden="true">CB</div>
         </section>
 
-        <!-- PAGE BUDGET -->
         <section class="budget-shell" aria-labelledby="budget-title">
             <header class="budget-header">
                 <h1 id="budget-title">Budget</h1>
@@ -49,104 +46,88 @@
 
             <section class="budget-summary" aria-label="Résumé budget">
                 <article class="budget-summary-card">
-                    <strong id="budgetTotal">0 €</strong>
-                    <span>TOTAL</span>
+                    <strong id="budgetTotalAmount">0 €</strong>
+                    <span>Budget prévu</span>
+                </article>
+
+                <article class="budget-summary-card">
+                    <strong id="budgetSpentAmount">0 €</strong>
+                    <span>Dépensé</span>
                 </article>
 
                 <article class="budget-summary-card budget-summary-alert">
-                    <strong id="budgetRemaining">0 €</strong>
+                    <strong id="budgetRemainingAmount">0 €</strong>
                     <span>Reste du budget</span>
                 </article>
             </section>
 
-            <div class="budget-actions-bar">
-                <button type="button" class="budget-add-button" id="openAddExpenseButton">
-                    + Ajouter une dépense
-                </button>
-            </div>
+            <section class="budget-form-section" aria-labelledby="budget-form-title">
+                <div class="budget-form-intro">
+                    <h2 id="budget-form-title">Budget global du projet</h2>
+                    <p>
+                        Projet :
+                        <strong id="budgetProjectName">-</strong>
+                    </p>
+                </div>
 
-            <div class="budget-table-wrapper">
-                <table class="budget-table">
-                    <thead>
-                        <tr>
-                            <th>Dépense</th>
-                            <th>Prévu</th>
-                            <th>Réel</th>
-                            <th>Différence</th>
-                            <th>Pourcentage du budget</th>
-                            <th>Commentaires</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
+                <form id="budgetForm" class="budget-form budget-inline-form">
+                    <div class="budget-form-grid">
+                        <div class="budget-form-group">
+                            <label for="budgetPlannedInput">Budget prévu</label>
+                            <input id="budgetPlannedInput" type="number" min="0" step="1" required
+                                placeholder="Ex : 18000" />
+                        </div>
 
-                    <tbody id="budgetTableBody">
-                        <!-- Rempli par client-budget.js -->
-                    </tbody>
-                </table>
-            </div>
-        </section>
+                        <div class="budget-form-group">
+                            <label for="budgetCommentInput">Commentaire général</label>
+                            <input id="budgetCommentInput" type="text"
+                                placeholder="Ex : Budget ajusté après validation des prestataires" />
+                        </div>
+                    </div>
 
-        <!-- MODALE AJOUT / MODIFICATION DÉPENSE -->
-        <div class="budget-modal hidden" id="budgetModal" role="dialog" aria-modal="true"
-            aria-labelledby="budgetModalTitle">
-            <div class="budget-modal-backdrop" id="budgetModalBackdrop"></div>
+                    <p id="budgetMessage" class="budget-message" aria-live="polite"></p>
+                </form>
+            </section>
 
-            <section class="budget-modal-card">
-                <div class="budget-modal-header">
-                    <h2 id="budgetModalTitle">Ajouter une dépense</h2>
+            <section class="budget-expenses-section" aria-labelledby="budget-expenses-title">
+                <div class="budget-expenses-header">
+                    <div>
+                        <h2 id="budget-expenses-title">Liste des dépenses</h2>
+                        <p>
+                            Ajoutez les postes budgétaires principaux. Le total dépensé et les pourcentages sont
+                            calculés automatiquement.
+                        </p>
+                    </div>
 
-                    <button type="button" class="budget-modal-close" id="closeBudgetModalButton" aria-label="Fermer">
-                        ×
+                    <button type="button" class="budget-add-button" id="addBudgetExpenseButton">
+                        + Ajouter une dépense
                     </button>
                 </div>
 
-                <form id="budgetForm" class="budget-form">
-                    <input type="hidden" id="expenseId" />
+                <div class="budget-table-wrapper">
+                    <table class="budget-table">
+                        <thead>
+                            <tr>
+                                <th>Dépense</th>
+                                <th>Prix</th>
+                                <th>Pourcentage du budget</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
 
-                    <div class="budget-form-group">
-                        <label for="expenseName">Dépense</label>
-                        <input id="expenseName" type="text" required placeholder="Ex : Traiteur" />
-                    </div>
+                        <tbody id="budgetExpensesTableBody">
+                            <!-- Rempli par client-budget.js -->
+                        </tbody>
+                    </table>
+                </div>
 
-                    <div class="budget-form-group">
-                        <label for="expensePlanned">Montant prévu</label>
-                        <input id="expensePlanned" type="number" min="0" step="1" required placeholder="Ex : 4000" />
-                    </div>
-
-                    <div class="budget-form-group">
-                        <label for="expenseActual">Montant réel</label>
-                        <input id="expenseActual" type="number" min="0" step="1" placeholder="Ex : 6500" />
-                    </div>
-
-                    <div class="budget-form-group">
-                        <label for="expenseComment">Commentaires</label>
-                        <textarea id="expenseComment" rows="3"
-                            placeholder="Ex : Voir à changer de prestataire"></textarea>
-                    </div>
-
-                    <div class="budget-form-preview">
-                        <p>
-                            Différence :
-                            <strong id="expenseDifferencePreview">0 €</strong>
-                        </p>
-                        <p>
-                            Pourcentage :
-                            <strong id="expensePercentagePreview">0 %</strong>
-                        </p>
-                    </div>
-
-                    <div class="budget-form-actions">
-                        <button type="button" class="budget-cancel-button" id="cancelBudgetButton">
-                            Annuler
-                        </button>
-
-                        <button type="submit" class="budget-save-button">
-                            Enregistrer
-                        </button>
-                    </div>
-                </form>
+                <div class="budget-save-zone">
+                    <button type="button" class="budget-save-button" id="budgetSubmitButton">
+                        Enregistrer le budget
+                    </button>
+                </div>
             </section>
-        </div>
+        </section>
     </main>
 </body>
 

@@ -29,7 +29,7 @@ function initLoginForm() {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "Accept": "application/json",
+                    Accept: "application/json",
                 },
                 credentials: "include",
                 body: JSON.stringify({
@@ -51,10 +51,8 @@ function initLoginForm() {
 
             showMessage(message, "Connexion réussie. Redirection...", "success");
 
-            const user = data.user || data;
-
-            setTimeout(() => {
-                redirectAfterLogin(user);
+            window.setTimeout(() => {
+                window.location.href = data.redirect || getFallbackRedirect(data.user);
             }, 500);
         } catch (error) {
             console.error("Erreur lors de la connexion :", error);
@@ -63,20 +61,18 @@ function initLoginForm() {
     });
 }
 
-function redirectAfterLogin(user) {
-    const roles = Array.isArray(user.roles) ? user.roles : [];
+function getFallbackRedirect(user) {
+    const roles = Array.isArray(user?.roles) ? user.roles : [];
 
     if (roles.includes("ROLE_ADMIN")) {
-        window.location.href = "/app/admin-dashboard.html";
-        return;
+        return "/app/admin-dashboard.html";
     }
 
     if (roles.includes("ROLE_CLIENT")) {
-        window.location.href = "/app/client-dashboard.html";
-        return;
+        return "/app/client-dashboard.html";
     }
 
-    window.location.href = "/app/client-dashboard.html";
+    return "/app/";
 }
 
 function initAppointmentButton() {

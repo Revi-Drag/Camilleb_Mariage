@@ -98,9 +98,9 @@
                         <select id="adminProjectStatusFilter" class="admin-filter-select"
                             aria-label="Filtrer par statut">
                             <option value="ALL">Tous</option>
-                            <option value="ACTIVE">En cours</option>
-                            <option value="COMPLETED">Terminés</option>
-                            <option value="ATTENTION">À traiter</option>
+                            <option value="en_attente">En attente</option>
+                            <option value="en_traitement">En traitement</option>
+                            <option value="finalise">Finalisés</option>
                         </select>
                     </div>
                 </div>
@@ -163,8 +163,9 @@
                         <div class="admin-project-form-group">
                             <label for="projectStatus">Statut</label>
                             <select id="projectStatus">
-                                <option value="ACTIVE">En cours</option>
-                                <option value="COMPLETED">Terminé</option>
+                                <option value="en_attente">En attente</option>
+                                <option value="en_traitement">En traitement</option>
+                                <option value="finalise">Finalisé</option>
                             </select>
                         </div>
                     </div>
@@ -212,8 +213,8 @@
                                 </div>
 
                                 <div class="admin-project-form-group">
-                                    <label for="quickClientPhone">Téléphone</label>
-                                    <input id="quickClientPhone" type="tel" placeholder="Ex : 06 12 34 56 78" />
+                                    <label for="quickClientPassword">Mot de passe temporaire</label>
+                                    <input id="quickClientPassword" type="password" placeholder="Ex : password" />
                                 </div>
                             </div>
 

@@ -2,145 +2,46 @@ document.addEventListener("DOMContentLoaded", () => {
     initAdminDashboard();
 });
 
+const API_BASE_URL = "";
+
 const adminDashboardState = {
     search: "",
     statusFilter: "ALL",
     selectedClientsForProject: [],
-    availableClients: [
-        {
-            id: 1,
-            firstName: "Marie",
-            lastName: "Dupont",
-            email: "marie.dupont@email.fr",
-            phone: "06 12 34 56 78",
-        },
-        {
-            id: 2,
-            firstName: "Lucas",
-            lastName: "Martin",
-            email: "lucas.martin@email.fr",
-            phone: "06 22 44 66 88",
-        },
-        {
-            id: 3,
-            firstName: "Client",
-            lastName: "Test",
-            email: "client@test.fr",
-            phone: "06 00 00 00 01",
-        },
-        {
-            id: 4,
-            firstName: "Emma",
-            lastName: "Laurent",
-            email: "emma.laurent@email.fr",
-            phone: "06 90 12 45 78",
-        },
-    ],
-    projects: [
-        {
-            id: 1,
-            name: "Mariage Marie & Lucas",
-            clients: ["Marie Dupont", "Lucas Martin"],
-            weddingDate: "2026-09-14",
-            status: "ACTIVE",
-            lastChange: {
-                type: "document",
-                label: "Nouveau document",
-                ago: "il y a 2 h",
-            },
-            attention: "Document à vérifier",
-            attentionType: "DOCUMENT",
-            documentsToReview: 1,
-            recentActivity: true,
-        },
-        {
-            id: 2,
-            name: "Mariage clients test",
-            clients: ["Client Test", "Conjoint Test"],
-            weddingDate: "2026-07-02",
-            status: "ACTIVE",
-            lastChange: {
-                type: "budget",
-                label: "Nouvelle dépense",
-                ago: "il y a 1 jour",
-            },
-            attention: "Budget dépassé",
-            attentionType: "BUDGET",
-            documentsToReview: 0,
-            recentActivity: true,
-        },
-        {
-            id: 3,
-            name: "Mariage Emma & Julien",
-            clients: ["Emma Laurent", "Julien Moreau"],
-            weddingDate: "2026-11-21",
-            status: "ACTIVE",
-            lastChange: {
-                type: "guest",
-                label: "Invité ajouté",
-                ago: "il y a 3 jours",
-            },
-            attention: "RAS",
-            attentionType: "NONE",
-            documentsToReview: 0,
-            recentActivity: true,
-        },
-        {
-            id: 4,
-            name: "Mariage Anaïs & Thomas",
-            clients: ["Anaïs Petit", "Thomas Bernard"],
-            weddingDate: "2025-06-18",
-            status: "COMPLETED",
-            lastChange: {
-                type: "none",
-                label: "Projet terminé",
-                ago: "il y a 8 mois",
-            },
-            attention: "Archivé",
-            attentionType: "NONE",
-            documentsToReview: 0,
-            recentActivity: false,
-        },
-        {
-            id: 5,
-            name: "Mariage Clara & Mehdi",
-            clients: ["Clara Simon", "Mehdi Haddad"],
-            weddingDate: "2026-05-30",
-            status: "ACTIVE",
-            lastChange: {
-                type: "comment",
-                label: "Nouveau commentaire client",
-                ago: "il y a 5 h",
-            },
-            attention: "Réponse à prévoir",
-            attentionType: "COMMENT",
-            documentsToReview: 0,
-            recentActivity: true,
-        },
-        {
-            id: 6,
-            name: "Mariage Sophie & Antoine",
-            clients: ["Sophie Martin", "Antoine Roux"],
-            weddingDate: "2026-08-09",
-            status: "ACTIVE",
-            lastChange: {
-                type: "document",
-                label: "Contrat salle déposé",
-                ago: "il y a 4 jours",
-            },
-            attention: "Document à vérifier",
-            attentionType: "DOCUMENT",
-            documentsToReview: 1,
-            recentActivity: true,
-        },
-    ],
+    availableClients: [],
+    projects: [],
 };
 
-function initAdminDashboard() {
+/* ==========================================================
+   INIT
+   ========================================================== */
+
+async function initAdminDashboard() {
     bindAdminDashboardEvents();
-    renderClientSelectOptions();
-    renderAdminDashboard();
+
+    try {
+        await loadAdminDashboardData();
+        renderClientSelectOptions();
+        renderAdminDashboard();
+    } catch (error) {
+        console.error("Erreur initialisation dashboard admin :", error);
+        alert("Impossible de charger le tableau de bord admin. Vérifie que tu es connecté en admin.");
+    }
 }
+
+async function loadAdminDashboardData() {
+    const [projects, clients] = await Promise.all([
+        fetchAdminProjects(),
+        fetchAdminClients(),
+    ]);
+
+    adminDashboardState.projects = projects.map(mapApiProjectToFrontProject);
+    adminDashboardState.availableClients = clients.map(mapApiClientToFrontClient);
+}
+
+/* ==========================================================
+   EVENTS
+   ========================================================== */
 
 function bindAdminDashboardEvents() {
     const refreshButton = document.querySelector("#refreshAdminDashboardButton");
@@ -158,8 +59,8 @@ function bindAdminDashboardEvents() {
     const saveQuickClientButton = document.querySelector("#saveQuickClientButton");
 
     if (refreshButton) {
-        refreshButton.addEventListener("click", () => {
-            renderAdminDashboard();
+        refreshButton.addEventListener("click", async () => {
+            await refreshAdminDashboard();
         });
     }
 
@@ -210,6 +111,116 @@ function bindAdminDashboardEvents() {
     }
 }
 
+/* ==========================================================
+   API
+   ========================================================== */
+
+async function fetchAdminProjects() {
+    const response = await fetch(`${API_BASE_URL}/api/admin/projets`, {
+        method: "GET",
+        credentials: "include",
+        headers: {
+            Accept: "application/json",
+        },
+    });
+
+    const data = await parseJsonResponse(response);
+
+    if (!response.ok) {
+        throw new Error(data.error || "Impossible de charger les projets admin.");
+    }
+
+    return Array.isArray(data) ? data : [];
+}
+
+async function fetchAdminClients() {
+    const response = await fetch(`${API_BASE_URL}/api/admin/clients`, {
+        method: "GET",
+        credentials: "include",
+        headers: {
+            Accept: "application/json",
+        },
+    });
+
+    const data = await parseJsonResponse(response);
+
+    if (!response.ok) {
+        throw new Error(data.error || "Impossible de charger les clients admin.");
+    }
+
+    return Array.isArray(data) ? data : [];
+}
+
+async function createAdminProject(payload) {
+    const response = await fetch(`${API_BASE_URL}/api/admin/projets`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+    });
+
+    const data = await parseJsonResponse(response);
+
+    if (!response.ok || data.success === false) {
+        throw new Error(data.error || "Impossible de créer le projet.");
+    }
+
+    return data.projet;
+}
+
+async function createAdminClient(payload) {
+    const response = await fetch(`${API_BASE_URL}/api/admin/clients`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+    });
+
+    const data = await parseJsonResponse(response);
+
+    if (!response.ok || data.success === false) {
+        throw new Error(data.error || "Impossible de créer le client.");
+    }
+
+    return data.client || data.user || data;
+}
+
+async function parseJsonResponse(response) {
+    const text = await response.text();
+
+    if (!text) {
+        return {};
+    }
+
+    try {
+        return JSON.parse(text);
+    } catch (error) {
+        console.error("Réponse non JSON :", text);
+        throw new Error("Réponse serveur invalide.");
+    }
+}
+
+async function refreshAdminDashboard() {
+    try {
+        await loadAdminDashboardData();
+        renderClientSelectOptions();
+        renderAdminDashboard();
+    } catch (error) {
+        console.error("Erreur actualisation admin :", error);
+        alert(error.message);
+    }
+}
+
+/* ==========================================================
+   RENDER
+   ========================================================== */
+
 function renderAdminDashboard() {
     renderAdminStats();
     renderAdminProjectsTable();
@@ -218,17 +229,14 @@ function renderAdminDashboard() {
 function renderAdminStats() {
     const projects = adminDashboardState.projects;
 
-    const activeProjects = projects.filter((project) => project.status === "ACTIVE");
-    const completedProjects = projects.filter((project) => project.status === "COMPLETED");
-    const recentActivities = projects.filter((project) => project.recentActivity);
-    const documentsToReview = projects.reduce((total, project) => {
-        return total + Number(project.documentsToReview || 0);
-    }, 0);
+    const activeProjects = projects.filter((project) => project.status === "en_traitement");
+    const completedProjects = projects.filter((project) => project.status === "finalise");
+    const waitingProjects = projects.filter((project) => project.status === "en_attente");
 
     setText("#activeProjectsCount", activeProjects.length);
     setText("#completedProjectsCount", completedProjects.length);
-    setText("#recentActivityCount", recentActivities.length);
-    setText("#documentsToReviewCount", documentsToReview);
+    setText("#recentActivityCount", waitingProjects.length);
+    setText("#documentsToReviewCount", 0);
 }
 
 function renderAdminProjectsTable() {
@@ -242,6 +250,19 @@ function renderAdminProjectsTable() {
 
     tableBody.innerHTML = "";
 
+    if (projects.length === 0) {
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+      <td colspan="7" class="admin-empty-cell">
+        Aucun projet à afficher.
+      </td>
+    `;
+
+        tableBody.appendChild(tr);
+        return;
+    }
+
     projects.forEach((project) => {
         const tr = document.createElement("tr");
 
@@ -251,7 +272,7 @@ function renderAdminProjectsTable() {
       </td>
 
       <td>
-        ${escapeHtml(project.clients.join(", "))}
+        ${escapeHtml(project.clients.join(", ") || "-")}
       </td>
 
       <td>
@@ -291,10 +312,7 @@ function renderAdminProjectsTable() {
 
 function getFilteredProjects() {
     return adminDashboardState.projects.filter((project) => {
-        const matchesSearch = matchesProjectSearch(project);
-        const matchesFilter = matchesProjectStatusFilter(project);
-
-        return matchesSearch && matchesFilter;
+        return matchesProjectSearch(project) && matchesProjectStatusFilter(project);
     });
 }
 
@@ -324,19 +342,7 @@ function matchesProjectStatusFilter(project) {
         return true;
     }
 
-    if (filter === "ACTIVE") {
-        return project.status === "ACTIVE";
-    }
-
-    if (filter === "COMPLETED") {
-        return project.status === "COMPLETED";
-    }
-
-    if (filter === "ATTENTION") {
-        return project.attentionType !== "NONE";
-    }
-
-    return true;
+    return project.status === filter;
 }
 
 function bindAdminRowActions() {
@@ -360,7 +366,7 @@ function bindAdminRowActions() {
 }
 
 /* ==========================================================
-   CRÉATION PROJET
+   MODALE PROJET
    ========================================================== */
 
 function openProjectModal() {
@@ -403,7 +409,7 @@ function renderClientSelectOptions() {
         .forEach((client) => {
             const option = document.createElement("option");
             option.value = client.id;
-            option.textContent = `${client.firstName} ${client.lastName} — ${client.email}`;
+            option.textContent = client.email;
             select.appendChild(option);
         });
 }
@@ -416,9 +422,16 @@ function addExistingClientToProject() {
         return;
     }
 
-    const client = adminDashboardState.availableClients.find((item) => item.id === Number(select.value));
+    const client = adminDashboardState.availableClients.find((item) => {
+        return item.id === Number(select.value);
+    });
 
     if (!client) {
+        return;
+    }
+
+    if (adminDashboardState.selectedClientsForProject.length >= 2) {
+        alert("Un projet mariage doit être lié à 1 ou 2 clients maximum.");
         return;
     }
 
@@ -438,33 +451,41 @@ function toggleQuickClientForm() {
     quickForm.classList.toggle("hidden");
 }
 
-function addQuickClientToProject() {
-    const firstName = getInputValue("#quickClientFirstName").trim();
-    const lastName = getInputValue("#quickClientLastName").trim();
+async function addQuickClientToProject() {
     const email = getInputValue("#quickClientEmail").trim();
-    const phone = getInputValue("#quickClientPhone").trim();
+    const password = getInputValue("#quickClientPassword").trim();
 
-    if (!firstName || !lastName || !email) {
-        alert("Prénom, nom et email sont obligatoires pour ajouter un client.");
+    if (!email || !password) {
+        alert("L’email et le mot de passe temporaire sont obligatoires pour créer un client.");
         return;
     }
 
-    const newClient = {
-        id: getNextClientId(),
-        firstName,
-        lastName,
+    if (adminDashboardState.selectedClientsForProject.length >= 2) {
+        alert("Un projet mariage doit être lié à 1 ou 2 clients maximum.");
+        return;
+    }
+
+    const payload = {
         email,
-        phone,
+        password,
     };
 
-    adminDashboardState.availableClients.push(newClient);
-    adminDashboardState.selectedClientsForProject.push(newClient);
+    try {
+        const createdClient = await createAdminClient(payload);
+        const mappedClient = mapApiClientToFrontClient(createdClient);
 
-    clearQuickClientFields();
-    hideElement("#quickClientForm");
+        adminDashboardState.availableClients.push(mappedClient);
+        adminDashboardState.selectedClientsForProject.push(mappedClient);
 
-    renderClientSelectOptions();
-    renderAssociatedClients();
+        clearQuickClientFields();
+        hideElement("#quickClientForm");
+
+        renderClientSelectOptions();
+        renderAssociatedClients();
+    } catch (error) {
+        console.error("Erreur création client rapide :", error);
+        alert(error.message);
+    }
 }
 
 function renderAssociatedClients() {
@@ -488,7 +509,7 @@ function renderAssociatedClients() {
         const li = document.createElement("li");
 
         li.innerHTML = `
-      <span>${escapeHtml(client.firstName)} ${escapeHtml(client.lastName)} — ${escapeHtml(client.email)}</span>
+      <span>${escapeHtml(client.email)}</span>
       <button type="button" data-remove-client-id="${client.id}">Retirer</button>
     `;
 
@@ -514,12 +535,12 @@ function bindRemoveAssociatedClientButtons() {
     });
 }
 
-function handleProjectFormSubmit(event) {
+async function handleProjectFormSubmit(event) {
     event.preventDefault();
 
     const name = getInputValue("#projectName").trim();
     const weddingDate = getInputValue("#projectWeddingDate");
-    const status = getInputValue("#projectStatus");
+    const status = getInputValue("#projectStatus") || "en_attente";
     const budget = getInputValue("#projectBudget");
     const adminComment = getInputValue("#projectAdminComment").trim();
 
@@ -533,89 +554,131 @@ function handleProjectFormSubmit(event) {
         return;
     }
 
-    const newProject = {
-        id: getNextProjectId(),
-        name,
-        clients: adminDashboardState.selectedClientsForProject.map((client) => {
-            return `${client.firstName} ${client.lastName}`;
-        }),
-        weddingDate,
-        status,
+    if (adminDashboardState.selectedClientsForProject.length > 2) {
+        alert("Un projet mariage doit être lié à 1 ou 2 clients maximum.");
+        return;
+    }
+
+    const payload = {
+        nom: name,
+        dateMariage: weddingDate,
         budget: budget ? Number(budget) : null,
-        adminComment,
-        lastChange: {
-            type: "project",
-            label: "Projet créé",
-            ago: "à l’instant",
-        },
-        attention: "RAS",
-        attentionType: "NONE",
-        documentsToReview: 0,
-        recentActivity: true,
+        description: "",
+        statut: status,
+        commentaireAdmin: adminComment || null,
+        clientIds: adminDashboardState.selectedClientsForProject.map((client) => client.id),
     };
 
-    adminDashboardState.projects.unshift(newProject);
-
-    closeProjectModal();
-    renderAdminDashboard();
-
-    /*
-      À brancher plus tard :
-      POST /api/admin/projets
-      Body :
-      {
-        name,
-        weddingDate,
-        status,
-        budget,
-        adminComment,
-        clients: [...]
-      }
-    */
+    try {
+        await createAdminProject(payload);
+        closeProjectModal();
+        await refreshAdminDashboard();
+    } catch (error) {
+        console.error("Erreur création projet :", error);
+        alert(error.message);
+    }
 }
+
+/* ==========================================================
+   MAPPING
+   ========================================================== */
+
+function mapApiProjectToFrontProject(apiProject) {
+    const clients = Array.isArray(apiProject.clients)
+        ? apiProject.clients.map((client) => client.email || `Client #${client.id}`)
+        : [];
+
+    return {
+        id: apiProject.id,
+        name: apiProject.nom || "Projet mariage",
+        clients,
+        weddingDate: apiProject.dateMariage || "",
+        status: apiProject.statut || "en_attente",
+        budget: apiProject.budget ?? null,
+        description: apiProject.description || "",
+        adminComment: apiProject.commentaireAdmin || "",
+        lastChange: buildProjectLastChange(apiProject),
+        attention: buildProjectAttention(apiProject),
+        attentionType: buildProjectAttentionType(apiProject),
+        documentsToReview: 0,
+        recentActivity: apiProject.statut === "en_attente",
+    };
+}
+
+function mapApiClientToFrontClient(apiClient) {
+    return {
+        id: Number(apiClient.id),
+        email: apiClient.email || "",
+        roles: Array.isArray(apiClient.roles) ? apiClient.roles : [],
+        projects: Array.isArray(apiClient.projetsMariage) ? apiClient.projetsMariage : [],
+    };
+}
+
+function buildProjectLastChange(apiProject) {
+    if (apiProject.commentaireAdmin) {
+        return {
+            type: "comment",
+            label: "Commentaire admin",
+            ago: "à jour",
+        };
+    }
+
+    return {
+        type: "project",
+        label: "Projet enregistré",
+        ago: "à jour",
+    };
+}
+
+function buildProjectAttention(apiProject) {
+    if (apiProject.statut === "en_attente") {
+        return "À traiter";
+    }
+
+    if (apiProject.statut === "finalise") {
+        return "Archivé";
+    }
+
+    return "RAS";
+}
+
+function buildProjectAttentionType(apiProject) {
+    if (apiProject.statut === "en_attente") {
+        return "COMMENT";
+    }
+
+    return "NONE";
+}
+
+/* ==========================================================
+   HELPERS
+   ========================================================== */
 
 function clearQuickClientFields() {
     setInputValue("#quickClientFirstName", "");
     setInputValue("#quickClientLastName", "");
     setInputValue("#quickClientEmail", "");
-    setInputValue("#quickClientPhone", "");
+    setInputValue("#quickClientPassword", "");
 }
-
-function getNextProjectId() {
-    if (adminDashboardState.projects.length === 0) {
-        return 1;
-    }
-
-    return Math.max(...adminDashboardState.projects.map((project) => project.id)) + 1;
-}
-
-function getNextClientId() {
-    if (adminDashboardState.availableClients.length === 0) {
-        return 1;
-    }
-
-    return Math.max(...adminDashboardState.availableClients.map((client) => client.id)) + 1;
-}
-
-/* ==========================================================
-   HELPERS EXISTANTS
-   ========================================================== */
 
 function getProjectStatusLabel(status) {
     const labels = {
-        ACTIVE: "En cours",
-        COMPLETED: "Terminé",
+        en_attente: "En attente",
+        en_traitement: "En traitement",
+        finalise: "Finalisé",
     };
 
-    return labels[status] || "En cours";
+    return labels[status] || status || "En attente";
 }
 
 function getProjectStatusClass(status) {
-    if (status === "COMPLETED") {
-        return "completed";
-    }
+    const classes = {
+        en_attente: "waiting",
+        en_traitement: "active",
+        finalise: "completed",
+    };
 
-    return "active";
+    return classes[status] || "waiting";
 }
 
 function getAttentionClass(attentionType) {
@@ -634,7 +697,8 @@ function formatDate(dateString) {
         return "-";
     }
 
-    const date = new Date(dateString);
+    const normalized = String(dateString).replace(" ", "T");
+    const date = new Date(normalized);
 
     if (Number.isNaN(date.getTime())) {
         return dateString;
@@ -698,7 +762,7 @@ function hideElement(selector) {
 }
 
 function escapeHtml(value) {
-    return String(value)
+    return String(value ?? "")
         .replaceAll("&", "&amp;")
         .replaceAll("<", "&lt;")
         .replaceAll(">", "&gt;")

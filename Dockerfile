@@ -25,7 +25,7 @@ COPY docker/apache/vhost.conf /etc/apache2/sites-available/000-default.conf
 
 COPY . .
 
-RUN composer install --no-dev --optimize-autoloader --no-interaction --no-progress \
+RUN composer install --no-dev --optimize-autoloader --no-interaction --no-progress --no-scripts \
     && mkdir -p var/cache var/log public/uploads/documents \
     && chown -R www-data:www-data var public/uploads
 

@@ -1,5 +1,8 @@
 FROM php:8.4-apache
 
+ENV APP_ENV=prod
+ENV APP_DEBUG=0
+
 WORKDIR /var/www/html
 
 RUN apt-get update \

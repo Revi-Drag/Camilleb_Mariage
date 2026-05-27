@@ -1,0 +1,23 @@
+services:
+  camilleb:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    container_name: camilleb-mariage
+    restart: unless-stopped
+
+    environment:
+      APP_ENV: prod
+      APP_DEBUG: "0"
+
+    volumes:
+      - ./var:/var/www/html/var
+      - ./public/uploads:/var/www/html/public/uploads
+
+    ports:
+      - "127.0.0.1:8084:80"
+
+    labels:
+      com.dozzle.group: "camilleb-mariage"
+      dozzle.enable: "true"

@@ -22,7 +22,7 @@ RUN apt-get update \
         pdo_mysql \
         zip \
         opcache \
-    && a2enmod rewrite headers \index
+    && a2enmod rewrite headers \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Symfony binary

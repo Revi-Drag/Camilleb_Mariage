@@ -22,7 +22,7 @@ RUN apt-get update \
         pdo_mysql \
         zip \
         opcache \
-    && a2dismod mpm_event mpm_worker || true \
+    && a2dismod -f mpm_event mpm_worker mpm_prefork || true \
     && a2enmod mpm_prefork rewrite headers \
     && rm -rf /var/lib/apt/lists/*
 

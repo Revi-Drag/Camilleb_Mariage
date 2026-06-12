@@ -6,86 +6,104 @@ const adminDocumentsState = {
     search: "",
     statusFilter: "ALL",
     typeFilter: "ALL",
-    documents: [
-        {
-            id: 1,
-            name: "devis-traiteur.pdf",
-            url: "/uploads/documents/devis-traiteur.pdf",
-            typeMime: "application/pdf",
-            size: 1543555,
-            project: "Mariage Marie & Lucas",
-            clients: ["Marie Dupont", "Lucas Martin"],
-            uploadedAgo: "il y a 2 h",
-            recent: true,
-            comment: "À comparer avec la formule cocktail.",
-        },
-        {
-            id: 2,
-            name: "inspiration-deco.jpg",
-            url: "/uploads/documents/inspiration-deco.jpg",
-            typeMime: "image/jpeg",
-            size: 845000,
-            project: "Mariage Marie & Lucas",
-            clients: ["Marie Dupont", "Lucas Martin"],
-            uploadedAgo: "il y a 6 h",
-            recent: true,
-            comment: "",
-        },
-        {
-            id: 3,
-            name: "contrat-salle.pdf",
-            url: "/uploads/documents/contrat-salle.pdf",
-            typeMime: "application/pdf",
-            size: 2120000,
-            project: "Mariage clients test",
-            clients: ["Client Test", "Conjoint Test"],
-            uploadedAgo: "il y a 1 jour",
-            recent: true,
-            comment: "À vérifier : horaires de fin de soirée.",
-        },
-        {
-            id: 4,
-            name: "plan-table-v1.xlsx",
-            url: "/uploads/documents/plan-table-v1.xlsx",
-            typeMime: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            size: 320000,
-            project: "Mariage Emma & Julien",
-            clients: ["Emma Laurent", "Julien Moreau"],
-            uploadedAgo: "il y a 4 jours",
-            recent: false,
-            comment: "",
-        },
-        {
-            id: 5,
-            name: "devis-dj.pdf",
-            url: "/uploads/documents/devis-dj.pdf",
-            typeMime: "application/pdf",
-            size: 780000,
-            project: "Mariage Clara & Mehdi",
-            clients: ["Clara Simon", "Mehdi Haddad"],
-            uploadedAgo: "il y a 8 jours",
-            recent: false,
-            comment: "",
-        },
-        {
-            id: 6,
-            name: "contrat-photographe.pdf",
-            url: "/uploads/documents/contrat-photographe.pdf",
-            typeMime: "application/pdf",
-            size: 1750000,
-            project: "Mariage Sophie & Antoine",
-            clients: ["Sophie Martin", "Antoine Roux"],
-            uploadedAgo: "il y a 10 jours",
-            recent: false,
-            comment: "Contrat cohérent, demander confirmation des horaires.",
-        },
-    ],
+    documents: [],
 };
 
-function initAdminDocumentsPage() {
+/* =================================
+   INITIALISATION
+================================= */
+
+async function initAdminDocumentsPage() {
     bindAdminDocumentsEvents();
+
+    try {
+        await loadAdminDocuments();
+    } catch (error) {
+        console.error(error);
+        alert("Impossible de charger les documents depuis la base de données.");
+        renderAdminDocumentsPage();
+    }
+}
+
+/* =================================
+   CHARGEMENT API
+================================= */
+
+async function loadAdminDocuments() {
+    const response = await fetch("/api/admin/documents", {
+        method: "GET",
+        credentials: "include",
+        headers: {
+            "Accept": "application/json"
+        }
+    });
+
+    const result = await response.json().catch(() => null);
+
+    if (!response.ok || !result || result.success === false) {
+        throw new Error(result?.error || "Impossible de charger les documents.");
+    }
+
+    const rawDocuments = result.data || result.documents || [];
+
+    adminDocumentsState.documents = rawDocuments.map(normalizeAdminDocument);
+
     renderAdminDocumentsPage();
 }
+
+function normalizeAdminDocument(documentItem) {
+    const clients = Array.isArray(documentItem.clients)
+        ? documentItem.clients
+        : documentItem.clients
+            ? [documentItem.clients]
+            : [];
+
+    const name =
+        documentItem.name ||
+        documentItem.originalName ||
+        documentItem.fileName ||
+        documentItem.filename ||
+        "Document sans nom";
+
+    const url =
+        documentItem.url ||
+        documentItem.fileUrl ||
+        documentItem.path ||
+        documentItem.publicUrl ||
+        buildDocumentUrl(documentItem);
+
+    return {
+        id: documentItem.id,
+        name,
+        url,
+        typeMime: documentItem.typeMime || documentItem.mimeType || documentItem.mime || "",
+        size: documentItem.size || documentItem.sizeBytes || 0,
+        project: documentItem.project || documentItem.projectName || "Projet non précisé",
+        clients,
+        uploadedAgo: documentItem.uploadedAgo || documentItem.createdAgo || documentItem.createdAt || "Date inconnue",
+        recent: Boolean(documentItem.recent),
+        comment: documentItem.comment || documentItem.adminComment || documentItem.commentaireAdmin || "",
+    };
+}
+
+function buildDocumentUrl(documentItem) {
+    const filename =
+        documentItem.fileName ||
+        documentItem.filename ||
+        documentItem.storedName ||
+        documentItem.storageName ||
+        "";
+
+    if (!filename) {
+        return "";
+    }
+
+    return `/uploads/documents/${encodeURIComponent(filename)}`;
+}
+
+/* =================================
+   ÉVÉNEMENTS
+================================= */
 
 function bindAdminDocumentsEvents() {
     const refreshButton = document.querySelector("#refreshAdminDocumentsButton");
@@ -99,8 +117,13 @@ function bindAdminDocumentsEvents() {
     const form = document.querySelector("#adminDocumentCommentForm");
 
     if (refreshButton) {
-        refreshButton.addEventListener("click", () => {
-            renderAdminDocumentsPage();
+        refreshButton.addEventListener("click", async () => {
+            try {
+                await loadAdminDocuments();
+            } catch (error) {
+                console.error(error);
+                alert("Impossible d’actualiser les documents.");
+            }
         });
     }
 
@@ -142,6 +165,10 @@ function bindAdminDocumentsEvents() {
     }
 }
 
+/* =================================
+   RENDU GLOBAL
+================================= */
+
 function renderAdminDocumentsPage() {
     renderAdminDocumentStats();
     renderAdminDocumentsTable();
@@ -172,47 +199,66 @@ function renderAdminDocumentsTable() {
 
     tableBody.innerHTML = "";
 
+    if (!documents.length) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td colspan="9" class="muted">
+                Aucun document trouvé.
+            </td>
+        `;
+        tableBody.appendChild(tr);
+        renderAdminDocumentStats();
+        return;
+    }
+
     documents.forEach((documentItem) => {
         const status = getDocumentStatus(documentItem);
         const type = getDocumentType(documentItem.typeMime);
+        const clientsText = getClientsText(documentItem);
 
         const tr = document.createElement("tr");
 
         tr.innerHTML = `
-      <td>
-        <strong class="admin-document-name">${escapeHtml(documentItem.name)}</strong>
-      </td>
+            <td>
+                <strong class="admin-document-name">${escapeHtml(documentItem.name)}</strong>
+            </td>
 
-      <td>${escapeHtml(documentItem.project)}</td>
+            <td>${escapeHtml(documentItem.project)}</td>
 
-      <td>${escapeHtml(documentItem.clients.join(", "))}</td>
+            <td>${escapeHtml(clientsText)}</td>
 
-      <td>${escapeHtml(type.label)}</td>
+            <td>${escapeHtml(type.label)}</td>
 
-      <td>${escapeHtml(formatFileSize(documentItem.size))}</td>
+            <td>${escapeHtml(formatFileSize(documentItem.size))}</td>
 
-      <td>
-        <span class="admin-document-uploaded">${escapeHtml(documentItem.uploadedAgo)}</span>
-      </td>
+            <td>
+                <span class="admin-document-uploaded">${escapeHtml(documentItem.uploadedAgo)}</span>
+            </td>
 
-      <td class="admin-document-comment-cell">
-        ${escapeHtml(documentItem.comment || "Aucun commentaire")}
-      </td>
+            <td class="admin-document-comment-cell">
+                ${escapeHtml(documentItem.comment || "Aucun commentaire")}
+            </td>
 
-      <td>
-        <span class="admin-document-status-pill ${status.className}">
-          ${status.label}
-        </span>
-      </td>
+            <td>
+                <span class="admin-document-status-pill ${status.className}">
+                    ${status.label}
+                </span>
+            </td>
 
-      <td>
-        <div class="admin-document-row-actions">
-          <a href="${escapeAttribute(documentItem.url)}" target="_blank" rel="noopener">Voir</a>
-          <button type="button" data-document-action="comment" data-id="${documentItem.id}">Commenter</button>
-          <button type="button" data-document-action="delete" data-id="${documentItem.id}">Supprimer</button>
-        </div>
-      </td>
-    `;
+            <td>
+                <div class="admin-document-row-actions">
+                    <button type="button" data-document-action="view" data-id="${escapeAttribute(documentItem.id)}">
+                        Voir
+                    </button>
+                    <button type="button" data-document-action="comment" data-id="${escapeAttribute(documentItem.id)}">
+                        Commenter
+                    </button>
+                    <button type="button" data-document-action="delete" data-id="${escapeAttribute(documentItem.id)}">
+                        Supprimer
+                    </button>
+                </div>
+            </td>
+        `;
 
         tableBody.appendChild(tr);
     });
@@ -220,6 +266,10 @@ function renderAdminDocumentsTable() {
     bindAdminDocumentRowActions();
     renderAdminDocumentStats();
 }
+
+/* =================================
+   FILTRES
+================================= */
 
 function getFilteredDocuments() {
     return adminDocumentsState.documents.filter((documentItem) => {
@@ -239,7 +289,7 @@ function matchesDocumentSearch(documentItem) {
     const haystack = [
         documentItem.name,
         documentItem.project,
-        documentItem.clients.join(" "),
+        getClientsText(documentItem),
         documentItem.typeMime,
         documentItem.uploadedAgo,
         documentItem.comment,
@@ -285,13 +335,22 @@ function matchesDocumentTypeFilter(documentItem) {
     return type.key === filter;
 }
 
+/* =================================
+   ACTIONS LIGNES
+================================= */
+
 function bindAdminDocumentRowActions() {
     const buttons = document.querySelectorAll("[data-document-action][data-id]");
 
     buttons.forEach((button) => {
         button.addEventListener("click", () => {
-            const id = Number(button.dataset.id);
+            const id = button.dataset.id;
             const action = button.dataset.documentAction;
+
+            if (action === "view") {
+                viewAdminDocument(id);
+                return;
+            }
 
             if (action === "comment") {
                 const documentItem = findDocumentById(id);
@@ -310,11 +369,33 @@ function bindAdminDocumentRowActions() {
     });
 }
 
+function viewAdminDocument(id) {
+    const documentItem = findDocumentById(id);
+
+    if (!documentItem) {
+        alert("Document introuvable.");
+        return;
+    }
+
+    const url = documentItem.url;
+
+    if (!url) {
+        alert("Aucun fichier n’est associé à ce document.");
+        return;
+    }
+
+    window.open(url, "_blank", "noopener");
+}
+
+/* =================================
+   COMMENTAIRE
+================================= */
+
 function openAdminDocumentModal(documentItem) {
     setInputValue("#adminDocumentId", documentItem.id);
     setText("#adminDocumentName", documentItem.name);
     setText("#adminDocumentProject", documentItem.project);
-    setText("#adminDocumentClients", documentItem.clients.join(", "));
+    setText("#adminDocumentClients", getClientsText(documentItem));
     setInputValue("#adminDocumentComment", documentItem.comment || "");
 
     showElement("#adminDocumentModal");
@@ -324,10 +405,10 @@ function closeAdminDocumentModal() {
     hideElement("#adminDocumentModal");
 }
 
-function handleDocumentCommentSubmit(event) {
+async function handleDocumentCommentSubmit(event) {
     event.preventDefault();
 
-    const id = Number(getInputValue("#adminDocumentId"));
+    const id = getInputValue("#adminDocumentId");
     const comment = getInputValue("#adminDocumentComment").trim();
 
     const documentItem = findDocumentById(id);
@@ -336,39 +417,93 @@ function handleDocumentCommentSubmit(event) {
         return;
     }
 
-    documentItem.comment = comment;
+    try {
+        const response = await fetch(`/api/admin/documents/${encodeURIComponent(id)}/comment`, {
+            method: "PATCH",
+            credentials: "include",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            body: JSON.stringify({ comment })
+        });
 
-    closeAdminDocumentModal();
-    renderAdminDocumentsPage();
+        const result = await response.json().catch(() => null);
 
-    /*
-      À brancher plus tard :
-      PATCH /api/admin/documents/{id}/commentaire
-      Body : { commentaireAdmin: comment }
-    */
+        if (!response.ok || result?.success === false) {
+            throw new Error(result?.error || "Impossible d’enregistrer le commentaire.");
+        }
+
+        documentItem.comment = comment;
+
+        closeAdminDocumentModal();
+        renderAdminDocumentsPage();
+    } catch (error) {
+        console.error(error);
+
+        // Fallback front si la route PATCH n’existe pas encore
+        documentItem.comment = comment;
+
+        closeAdminDocumentModal();
+        renderAdminDocumentsPage();
+
+        alert("Commentaire mis à jour côté interface. La route API de sauvegarde n’est peut-être pas encore branchée.");
+    }
 }
 
-function deleteAdminDocument(id) {
+/* =================================
+   SUPPRESSION
+================================= */
+
+async function deleteAdminDocument(id) {
     const confirmed = window.confirm("Supprimer ce document ?");
 
     if (!confirmed) {
         return;
     }
 
-    adminDocumentsState.documents = adminDocumentsState.documents.filter((documentItem) => {
-        return documentItem.id !== id;
-    });
+    try {
+        const response = await fetch(`/api/admin/documents/${encodeURIComponent(id)}`, {
+            method: "DELETE",
+            credentials: "include",
+            headers: {
+                "Accept": "application/json"
+            }
+        });
 
-    renderAdminDocumentsPage();
+        const result = await response.json().catch(() => null);
 
-    /*
-      À brancher plus tard :
-      DELETE /api/admin/documents/{id}
-    */
+        if (!response.ok || result?.success === false) {
+            throw new Error(result?.error || "Impossible de supprimer le document.");
+        }
+
+        adminDocumentsState.documents = adminDocumentsState.documents.filter((documentItem) => {
+            return String(documentItem.id) !== String(id);
+        });
+
+        renderAdminDocumentsPage();
+    } catch (error) {
+        console.error(error);
+
+        // Fallback front si la route DELETE n’existe pas encore
+        adminDocumentsState.documents = adminDocumentsState.documents.filter((documentItem) => {
+            return String(documentItem.id) !== String(id);
+        });
+
+        renderAdminDocumentsPage();
+
+        alert("Document supprimé côté interface. La route API de suppression n’est peut-être pas encore branchée.");
+    }
 }
 
+/* =================================
+   HELPERS DOCUMENTS
+================================= */
+
 function findDocumentById(id) {
-    return adminDocumentsState.documents.find((documentItem) => documentItem.id === id);
+    return adminDocumentsState.documents.find((documentItem) => {
+        return String(documentItem.id) === String(id);
+    });
 }
 
 function hasAdminComment(documentItem) {
@@ -417,6 +552,14 @@ function getDocumentType(typeMime) {
     };
 }
 
+function getClientsText(documentItem) {
+    if (Array.isArray(documentItem.clients)) {
+        return documentItem.clients.join(", ");
+    }
+
+    return documentItem.clients || "";
+}
+
 function formatFileSize(size) {
     const bytes = Number(size || 0);
 
@@ -430,6 +573,10 @@ function formatFileSize(size) {
 
     return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`;
 }
+
+/* =================================
+   HELPERS DOM
+================================= */
 
 function setText(selector, value) {
     const element = document.querySelector(selector);
@@ -482,7 +629,7 @@ function hideElement(selector) {
 }
 
 function escapeHtml(value) {
-    return String(value)
+    return String(value ?? "")
         .replaceAll("&", "&amp;")
         .replaceAll("<", "&lt;")
         .replaceAll(">", "&gt;")
